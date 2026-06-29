@@ -5,11 +5,14 @@ import App from "./App";
 import { AuthProvider } from "../src/Contex/AuthContext";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { HelmetProvider } from 'react-helmet-async'; // ← এটা যোগ করুন
+import { HelmetProvider } from 'react-helmet-async';
+import axios from 'axios';
+
+axios.defaults.headers.common['ngrok-skip-browser-warning'] = 'true';
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <HelmetProvider> {/* ← wrap করুন */}
+    <HelmetProvider>
       <AuthProvider>
         <App />
         <ToastContainer
@@ -24,6 +27,6 @@ createRoot(document.getElementById("root")!).render(
           pauseOnHover
         />
       </AuthProvider>
-    </HelmetProvider> {/* ← বন্ধ করুন */}
+    </HelmetProvider>
   </StrictMode>
 );
