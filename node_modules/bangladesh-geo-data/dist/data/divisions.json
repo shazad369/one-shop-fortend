@@ -1,0 +1,10 @@
+[
+    { "id": "div-01", "name": "Dhaka", "nameBn": "ঢাকা" },
+    { "id": "div-02", "name": "Chattogram", "nameBn": "চট্টগ্রাম" },
+    { "id": "div-03", "name": "Rajshahi", "nameBn": "রাজশাহী" },
+    { "id": "div-04", "name": "Khulna", "nameBn": "খুলনা" },
+    { "id": "div-05", "name": "Barishal", "nameBn": "বরিশাল" },
+    { "id": "div-06", "name": "Sylhet", "nameBn": "সিলেট" },
+    { "id": "div-07", "name": "Rangpur", "nameBn": "রংপুর" },
+    { "id": "div-08", "name": "Mymensingh", "nameBn": "ময়মনসিংহ" }
+]
