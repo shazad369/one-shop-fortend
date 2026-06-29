@@ -37,7 +37,7 @@ const orderPayload = {
     amount_to_collect: 500  
 };
     try {
-        const res = await axios.post('http://localhost:5000api/pathao/create-order', orderPayload);
+       const res = await axios.post(`${import.meta.env.VITE_API}/api/pathao/create-order`, orderPayload);
         alert("অর্ডার সফল! আইডি: " + res.data.data.consignment_id);
     } catch (err: any) {
         // এখানে পপআপে আসল কারণটি দেখা যাবে
