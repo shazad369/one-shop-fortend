@@ -93,6 +93,7 @@ const ReLogin = () => {
       headers: {
         'x-api-key': import.meta.env.VITE_API_KEY,
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true'
       },
       body: JSON.stringify({ email: payload.email, password: null }),
     })
@@ -124,6 +125,7 @@ const ReLogin = () => {
       headers: {
         'x-api-key': import.meta.env.VITE_API_KEY,
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true'
       },
       body: JSON.stringify(formData),
     })
@@ -173,6 +175,7 @@ const ReLogin = () => {
         headers: {
           'x-api-key': import.meta.env.VITE_API_KEY,
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
         },
         body: JSON.stringify({ email: forgotEmail }),
       });
@@ -204,6 +207,7 @@ const ReLogin = () => {
         headers: {
           'x-api-key': import.meta.env.VITE_API_KEY,
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
         },
         body: JSON.stringify({ email: forgotEmail, otp: forgotOtp }),
       });
@@ -238,6 +242,7 @@ const ReLogin = () => {
         headers: {
           'x-api-key': import.meta.env.VITE_API_KEY,
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
         },
         body: JSON.stringify({ email: forgotEmail, newPassword }),
       });
