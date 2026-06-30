@@ -241,6 +241,7 @@ export default function DeliveryForm({ onSubmit }: { onSubmit?: (data: FormData)
     fetch(`${API}/userlocation?email=${encodeURIComponent(user.email)}`, {
       headers: {
         'x-api-key': import.meta.env.VITE_API_KEY,
+         'ngrok-skip-browser-warning': 'true',
         'Content-Type': 'application/json'
       }
     })
@@ -293,6 +294,7 @@ export default function DeliveryForm({ onSubmit }: { onSubmit?: (data: FormData)
           method: "PUT",
           headers: {
             'x-api-key': import.meta.env.VITE_API_KEY,
+             'ngrok-skip-browser-warning': 'true',
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(form),
@@ -306,7 +308,8 @@ export default function DeliveryForm({ onSubmit }: { onSubmit?: (data: FormData)
           method: "POST",
           headers: {
             'x-api-key': import.meta.env.VITE_API_KEY,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+             'ngrok-skip-browser-warning': 'true'
           },
           body: JSON.stringify(form),
         });
@@ -338,7 +341,11 @@ export default function DeliveryForm({ onSubmit }: { onSubmit?: (data: FormData)
     if (!user?.email || !confirm("Address delete করবেন?")) return;
     await fetch(`${API}/userlocation?email=${encodeURIComponent(user.email)}`, {
       method: "DELETE",
-      headers: { 'x-api-key': import.meta.env.VITE_API_KEY }
+     headers: {
+            'x-api-key': import.meta.env.VITE_API_KEY,
+            'Content-Type': 'application/json',
+             'ngrok-skip-browser-warning': 'true'
+          }
     });
     clearLocationCache(user.email); // cache clear
     setSavedData(null);

@@ -15,6 +15,7 @@ const API_BASE = import.meta.env.VITE_API;
 const HEADERS = {
   "Content-Type": "application/json",
   "x-api-key": API_KEY,
+  'ngrok-skip-browser-warning': 'true'
 };
 
 // ════════════════════════════════════════════════════════════════════

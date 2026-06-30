@@ -12,10 +12,10 @@ export const siteConfig = {
 
   // --- API Configuration ---
   // Change this API URL to fetch your own products
-  productApiUrl: "http://localhost:5000/shopdata?page=1&limit=20",
+  productApiUrl: `${import.meta.env.VITE_API}/shopdata?page=1&limit=20`,
 // --- API Configuration ---
-apiBase: "http://localhost:5000",   // ← এটা add করো
-productApiUrl: "http://localhost:5000/shopdata?page=1&limit=20",
+apiBase: import.meta.env.VITE_API,  // ← এটা add করো
+productApiUrl: `${import.meta.env.VITE_API}/shopdata?page=1&limit=20`,
   // --- Hero Section ---
   hero: {
     title: "Elevate Your",

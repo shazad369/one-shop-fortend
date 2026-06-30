@@ -123,7 +123,9 @@ export default function OrdersPage() {
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API}/orders?page=${p}&limit=${LIMIT}`,
-        { headers: { 'x-api-key': import.meta.env.VITE_API_KEY, 'Content-Type': 'application/json' } }
+        { headers: { 'x-api-key': import.meta.env.VITE_API_KEY,
+                     'ngrok-skip-browser-warning': 'true',
+                    'Content-Type': 'application/json' } }
       );
       if (!res.ok) throw new Error("Server থেকে data আসেনি");
       const data = await res.json();

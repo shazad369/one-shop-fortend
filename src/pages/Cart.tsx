@@ -147,7 +147,9 @@ const Cart = () => {
     try {
       const res    = await fetch(`${API}/getcartdata`, {
         method: 'POST',
-        headers: { 'x-api-key': API_KEY, 'Content-Type': 'application/json' },
+        headers: { 'x-api-key': API_KEY,
+                   'ngrok-skip-browser-warning': 'true',
+                  'Content-Type': 'application/json' },
         body: JSON.stringify({ email, page: p, limit: LIMIT }),
       });
       const result = await res.json();
