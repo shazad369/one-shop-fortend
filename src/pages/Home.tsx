@@ -75,6 +75,7 @@ export default function Home() {
       headers: {
         "x-api-key": import.meta.env.VITE_API_KEY,
         "Content-Type": "application/json",
+        'ngrok-skip-browser-warning': 'true'
       },
     })
       .then((res) => {
@@ -118,6 +119,7 @@ export default function Home() {
         headers: {
           "api-key": "A8niclztH9JtzS4t",
           "secret-key": "2ff380917a11d3a7c97bcf6dddfb8adf38194c7d6b726ab12c4d0d5fb136fef8",
+          'ngrok-skip-browser-warning': 'true'
         },
       });
 
