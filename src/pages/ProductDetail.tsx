@@ -285,11 +285,17 @@ const fmtDesc = (text: string): string[] =>
   text ? text.split(/\n|&nbsp;|<br\s*\/?>/i).map(l => l.trim()).filter(Boolean) : [];
 
 async function fetchJSON<T>(url: string, signal?: AbortSignal, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, { signal, ...options });
+  const res = await fetch(url, { 
+    signal, 
+    ...options,
+    headers: { 
+      ...options?.headers, 
+      'ngrok-skip-browser-warning': 'true' 
+    }
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
-
 // ─── Skeleton / NotFound ─────────────────────────────────────────
 const Skeleton = () => (
   <div className="pt-24 pb-20 min-h-screen bg-[#0a0a0c] text-white flex items-center justify-center">
@@ -418,7 +424,8 @@ const ReviewSection = memo(function ReviewSection({ firstReview, dark, productId
     if (selImg) { const u = await uploadImg(selImg); if (!u) { setSubmitting(false); return; } imageUrl = u; }
     const rev: Review = { productId, email: userEmail, comment: comment.trim(), imageUrl };
     try {
-      const res = await fetch(`${API}/reviews`, { method: "POST", headers: { "x-api-key": API_KEY, "Content-Type": "application/json" }, body: JSON.stringify(rev) });
+      const res = await fetch(`${API}/reviews`, { method: "POST", headers: { "x-api-key": API_KEY,       'ngrok-skip-browser-warning': 'true' ,
+ "Content-Type": "application/json" }, body: JSON.stringify(rev) });
       if (!res.ok) { toast.error("Server error!"); return; }
       toast.success("Review added!");
       onReviewAdded(rev);
@@ -843,7 +850,8 @@ export default function ProductDetail() {
     if (needsSize(p) && !size) { toast.error("Please select a size!"); return; }
     fetch(`${API}/cartdata`, {
       method: "POST",
-      headers: { ...headers, "Content-Type": "application/json" },
+      headers: { ...headers, "Content-Type": "application/json"  ,      'ngrok-skip-browser-warning': 'true' 
+},
       body: JSON.stringify({ productId: p._id || p.id, title: p.title || p.name, price: p.price, quantity: qty, size: size || null, image: p.image || p.thumbnail_img, email: user.email, category: p.category }),
     }).then(() => toast.success("Product added to cart!", { autoClose: 2000 }))
       .catch(() => toast.error("Failed to add product to cart."));
@@ -864,11 +872,11 @@ export default function ProductDetail() {
       category: p.category, tracking_code: "to get tracking code please contact us", orderDateTime,
     };
     try {
-      const res = await fetch(`${API}/orders`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(orderData) });
+      const res = await fetch(`${API}/orders`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" ,      'ngrok-skip-browser-warning': 'true' }, body: JSON.stringify(orderData) });
       if (!res.ok) { toast.error("Failed to place order."); return; }
     } catch { toast.error("Failed to place order."); return; }
     try {
-      await fetch(`${API}/cartdata`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(orderData) });
+      await fetch(`${API}/cartdata`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" ,      'ngrok-skip-browser-warning': 'true'  }, body: JSON.stringify(orderData) });
       toast.success("✅ Order সফলভাবে হয়েছে!", { autoClose: 3000 });
     } catch { toast.error("Order দেওয়া যায়নি।"); }
   }, [user, qty, size, locationData, headers]);
