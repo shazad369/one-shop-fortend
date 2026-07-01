@@ -1,6 +1,6 @@
 const originalFetch = window.fetch;
 window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
   const headers = new Headers(init?.headers || {});
-  headers.set('ngrok-skip-browser-warning', 'true');
+  headers.set('localtonet-skip-warning', 'true');
   return originalFetch(input, { ...init, headers });
 };
