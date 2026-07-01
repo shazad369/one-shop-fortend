@@ -10,7 +10,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { HelmetProvider } from 'react-helmet-async';
 import axios from 'axios';
 
-axios.defaults.headers.common['ngrok-skip-browser-warning'] = 'true';
+axios.defaults.headers.common['localtonet-skip-warning'] = 'true';
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
