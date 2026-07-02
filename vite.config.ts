@@ -34,7 +34,7 @@ export default defineConfig({
         },
       },
 "/local-api": {
-  target: "https://nonpliable-uneugenically-melina.ngrok-free.dev",
+  target: "https://h9zgeyv2sm.localto.net",
   changeOrigin: true,
   rewrite: (path) => path.replace(/^\/local-api/, ""),
   headers: {
