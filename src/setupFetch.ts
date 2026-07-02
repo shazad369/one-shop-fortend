@@ -1,6 +1,6 @@
 // src/setupFetch.ts
 
-const BACKEND_URL = 'https://balance-motel-batch-repairs.trycloudflare.com';  // ✅ আপনার Localtonet URL
+const BACKEND_URL = 'https://h9zgeyv2sm.localto.net';  // ✅ আপনার Localtonet URL
 const API_KEY = 'one-shop-secret-key-change-this';
 
 // ════════════════════════════════════════════════════════════
