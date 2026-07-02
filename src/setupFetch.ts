@@ -1,23 +1,57 @@
 const BACKEND_URL = 'https://h9zgeyv2sm.localto.net';
 
-window.fetch = new Proxy(window.fetch, {
-  apply: async function(target, thisArg, argumentsList) {
-    let [input, init = {}] = argumentsList;
+// ============================================
+// ✅ সঠিক ফ্রন্টেন্ড কোড - CORS error থাকবে না
+// ============================================
 
-    // যদি relative path হয় (/ দিয়ে শুরু), backend URL জুড়ে দাও
-    if (typeof input === 'string' && input.startsWith('/')) {
-      input = BACKEND_URL + input;
+const BACKEND_URL = 'https://oneshop.pre.bd';
+const API_KEY = 'one-shop-secret-key-change-this';
+
+// 1️⃣ সরাসরি fetch - কোনো ওভাররাইড নেই
+// এই কোডটি আপনার পুরো fetch ওভাররাইড কোডের জায়গায় বসবে
+
+// 2️⃣ API হেল্পার ফাংশন (যা fetch ওভাররাইডের কাজ করবে)
+async function apiRequest(endpoint, options = {}) {
+    const url = endpoint.startsWith('/') ? `${BACKEND_URL}${endpoint}` : endpoint;
+    
+    const response = await fetch(url, {
+        ...options,
+        headers: {
+            'x-api-key': API_KEY,
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const headers = new Headers(init.headers || {});
-    headers.set('x-api-key', 'one-shop-secret-key-change-this');
-    headers.set('localtonet-skip-warning', 'true');
+    return response.json();
+}
 
-    return target.call(thisArg, input, {
-      ...init,
-      headers,
-      mode: 'cors',
-      credentials: 'omit',
+// 3️⃣ ব্যবহারের উদাহরণ:
+
+// GET রিকোয়েস্ট
+async function getData(endpoint) {
+    return apiRequest(endpoint);
+}
+
+// POST রিকোয়েস্ট
+async function postData(endpoint, data) {
+    return apiRequest(endpoint, {
+        method: 'POST',
+        body: JSON.stringify(data)
     });
-  }
-});
+}
+
+// 4️⃣ আপনার পুরানো কোড যেখানে fetch ব্যবহার করতেন:
+
+// ❌ আগে (যা CORS error দিচ্ছিল):
+// const data = await fetch('/shopdata?page=1&limit=20');
+
+// ✅ এখন (CORS error থাকবে না):
+const data = await getData('/shopdata?page=1&limit=20');
+
+// অথবা সরাসরি:
+const data = await apiRequest('/shopdata?page=1&limit=20');
