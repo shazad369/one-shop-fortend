@@ -1,5 +1,5 @@
 // src/setupFetch.ts
-const BACKEND_URL = 'https://oneshop.pre.bd';  // ✅ আপনার ব্যাকএন্ড URL
+const BACKEND_URL = 'https://h9zgeyv2sm.localto.net';  // ✅ আপনার ব্যাকএন্ড URL
 const API_KEY = 'one-shop-secret-key-change-this';
 
 export async function getData(endpoint: string) {
