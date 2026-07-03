@@ -27,8 +27,17 @@ export async function onRequest(context) {
 
   const title = (product.title || product.name || "ONE-SHOP") + " — ONE-SHOP";
   const rawDesc = (product.description || "").replace(/<[^>]*>/g, "").trim();
-  const description = (rawDesc.slice(0, 160) || "ONE-SHOP এ এই প্রোডাক্টটি দেখুন — Cash on Delivery ও Free Shipping সুবিধাসহ।");
-  const image = product.image || product.thumbnail_img || "https://i.postimg.cc/1zWZfCtG/Gemini-Generated-Image-w5no2ww5no2ww5no-Photoroom.png";
+  const description = rawDesc.slice(0, 160) || "ONE-SHOP এ এই প্রোডাক্টটি দেখুন — Cash on Delivery ও Free Shipping সুবিধাসহ।";
+
+  // ছবি absolute URL কিনা নিশ্চিত করা — না হলে backend domain জুড়ে দেওয়া
+  let image = product.image || product.thumbnail_img || "";
+  if (image && !image.startsWith("http")) {
+    image = `${BACKEND_URL}${image.startsWith("/") ? "" : "/"}${image}`;
+  }
+  if (!image) {
+    image = "https://i.postimg.cc/1zWZfCtG/Gemini-Generated-Image-w5no2ww5no2ww5no-Photoroom.png";
+  }
+
   const url = `https://oneshop.pre.bd/product/${id}`;
 
   class MetaTag {
@@ -38,6 +47,10 @@ export async function onRequest(context) {
   class TitleTag {
     constructor(value) { this.value = value; }
     element(element) { element.setInnerContent(this.value); }
+  }
+  class CanonicalTag {
+    constructor(value) { this.value = value; }
+    element(element) { element.setAttribute("href", this.value); }
   }
 
   return new HTMLRewriter()
@@ -51,5 +64,6 @@ export async function onRequest(context) {
     .on('meta[name="twitter:image"]', new MetaTag(image))
     .on('meta[property="og:url"]', new MetaTag(url))
     .on('meta[name="twitter:url"]', new MetaTag(url))
+    .on('link[rel="canonical"]', new CanonicalTag(url))
     .transform(originResponse);
 }
