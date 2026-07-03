@@ -34,7 +34,7 @@ export default defineConfig({
         },
       },
 "/local-api": {
-  target: "https://h9zgeyv2sm.localto.net",
+  target: "https://assumption-rates-wallace-orleans.trycloudflare.com",
   changeOrigin: true,
   rewrite: (path) => path.replace(/^\/local-api/, ""),
   headers: {
