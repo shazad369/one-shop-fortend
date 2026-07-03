@@ -34,7 +34,7 @@ export default defineConfig({
         },
       },
 "/local-api": {
-  target: "https://h9zgeyv2sm.localto.net",
+  target: "https://income-suitable-codes-mil.trycloudflare.com",
   changeOrigin: true,
   rewrite: (path) => path.replace(/^\/local-api/, ""),
   headers: {
