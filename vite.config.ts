@@ -38,7 +38,7 @@ export default defineConfig({
   changeOrigin: true,
   rewrite: (path) => path.replace(/^\/local-api/, ""),
   headers: {
-  "localtonet-skip-warning": "true"
+
   }
 },
     },
