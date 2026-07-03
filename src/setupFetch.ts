@@ -1,6 +1,6 @@
 // src/setupFetch.ts
 
-const BACKEND_URL = 'https://assumption-rates-wallace-orleans.trycloudflare.com';  // ✅ আপনার Localtonet URL
+const BACKEND_URL = 'https://shazadhossain-ih61-ma5.tail72a7a3.ts.net';  // ✅ আপনার Localtonet URL
 const API_KEY = 'one-shop-secret-key-change-this';
 
 // ════════════════════════════════════════════════════════════
