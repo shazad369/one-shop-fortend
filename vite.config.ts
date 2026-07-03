@@ -34,11 +34,11 @@ export default defineConfig({
         },
       },
 "/local-api": {
-  target: "https://income-suitable-codes-mil.trycloudflare.com",
+  target: "https://h9zgeyv2sm.localto.net",
   changeOrigin: true,
   rewrite: (path) => path.replace(/^\/local-api/, ""),
   headers: {
-    "localtonet-skip-warning": "true"
+  
   }
 },
     },
