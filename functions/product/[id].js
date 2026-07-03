@@ -4,18 +4,22 @@ export async function onRequest(context) {
 
   const isBot = /facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|bingbot|vkShare|SkypeUriPreview/i.test(ua);
 
-  // সাধারণ ইউজার হলে React app স্বাভাবিকভাবে সার্ভ হবে
   if (!isBot) {
     return next();
   }
 
   const id = params.id;
   const BACKEND_URL = "https://shazadhossain-ih61-ma5.tail72a7a3.ts.net";
+  const API_KEY = "one-shop-secret-key-change-this";
 
   let product = null;
   try {
     const res = await fetch(`${BACKEND_URL}/product/${id}`, {
-      headers: { "ngrok-skip-browser-warning": "true" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": API_KEY,
+        "ngrok-skip-browser-warning": "true",
+      },
     });
     if (res.ok) product = await res.json();
   } catch (e) {
@@ -29,8 +33,7 @@ export async function onRequest(context) {
   const rawDesc = (product.description || "").replace(/<[^>]*>/g, "").trim();
   const description = rawDesc.slice(0, 160) || "ONE-SHOP এ এই প্রোডাক্টটি দেখুন — Cash on Delivery ও Free Shipping সুবিধাসহ।";
 
-  // ছবি absolute URL কিনা নিশ্চিত করা — না হলে backend domain জুড়ে দেওয়া
-  let image = product.image || product.thumbnail_img || "";
+  let image = product.thumbnail_img || product.image || "";
   if (image && !image.startsWith("http")) {
     image = `${BACKEND_URL}${image.startsWith("/") ? "" : "/"}${image}`;
   }
