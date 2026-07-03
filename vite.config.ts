@@ -34,7 +34,7 @@ export default defineConfig({
         },
       },
 "/local-api": {
-  target: "https://shazadhossain-ih61-ma5.tail72a7a3.ts.net",
+  target: "https://surl.li/bzxoju",
   changeOrigin: true,
   rewrite: (path) => path.replace(/^\/local-api/, ""),
   headers: {
