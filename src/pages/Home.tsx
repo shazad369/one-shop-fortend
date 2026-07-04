@@ -117,9 +117,9 @@ export default function Home() {
       const response = await fetch(siteConfig.productApiUrl, {
         method: "GET",
         headers: {
-          "api-key": "A8niclztH9JtzS4t",
-          "secret-key": "2ff380917a11d3a7c97bcf6dddfb8adf38194c7d6b726ab12c4d0d5fb136fef8",
-          'ngrok-skip-browser-warning': 'true'
+          "Content-Type": "application/json",
+  "x-api-key": import.meta.env.VITE_API_KEY,
+  'ngrok-skip-browser-warning': 'true'
         },
       });
 
