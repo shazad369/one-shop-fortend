@@ -945,7 +945,7 @@ export default function ProductDetail() {
 
             <div className="mb-4">
               <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-emerald-500">৳{(activePrice + 120).toFixed(2)}</span>
+                <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-emerald-500">৳{(activePrice ).toFixed(2)}</span>
                 <span className={`text-lg line-through ${dark ? "text-gray-500" : "text-gray-400"}`}>৳{displayPrice.toFixed(2)}</span>
                 <span className="px-2 py-1 rounded-lg bg-red-500/20 text-red-400 text-sm font-semibold">-{discountPct}% OFF</span>
               </div>
@@ -1004,7 +1004,7 @@ export default function ProductDetail() {
             </div>
 
             <div className="mb-6 p-4 rounded-xl border border-dashed border-emerald-500/30 bg-emerald-500/5">
-              <p className="flex items-center gap-2 text-sm sm:text-base font-bold text-emerald-400">🟢 Always Buy Cash on Delivery</p>
+              <p className="flex items-center gap-2 text-sm sm:text-base font-bold text-emerald-400"> All Bangladesh Cash on Delivery Charge only 120 tk </p>
               <p className="text-xs sm:text-sm text-gray-400 mt-1">✔ Safe, Secure &amp; Trusted Service Guaranteed</p>
             </div>
 
@@ -1012,7 +1012,7 @@ export default function ProductDetail() {
               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={() => { if (!user) { toast.error("Please login first!"); return; } if (showSize && !size) { toast.error("Please select a size first!"); return; } setAccepted(false); setShowConfirm(true); }}
                 className="relative w-full py-3 sm:py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-cyan-500 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow duration-300 mb-6 overflow-hidden text-sm sm:text-base cursor-pointer">
-                <ShoppingCart size={18} /> Buy Now ৳{(activePrice + 120).toFixed(2)}
+                <ShoppingCart size={18} /> Buy Now ৳{(activePrice ).toFixed(2)}
               </motion.button>
             ) : (
               <Link to="/location" className="relative w-full py-3 sm:py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold flex items-center justify-center gap-2 shadow-lg mb-6 text-sm sm:text-base">
@@ -1082,37 +1082,73 @@ export default function ProductDetail() {
       {/* ━━ Confirm Modal ━━ */}
       <AnimatePresence>
         {showConfirm && (
-          <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setShowConfirm(false)}>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 30 }} transition={{ duration: 0.25 }}
-              className={`rounded-2xl shadow-2xl w-full max-w-sm ${dark ? "bg-gray-900 border border-white/10" : "bg-white"}`}
-              onClick={e => e.stopPropagation()}>
-              <div className={`flex items-center justify-between p-4 border-b ${dark ? "border-white/10" : "border-gray-200"}`}>
-                <h3 className={`font-bold text-base ${dark ? "text-white" : "text-gray-800"}`}>🛒 Confirm Your Order</h3>
-                <button onClick={() => setShowConfirm(false)} className="text-gray-400 hover:text-gray-600 text-2xl font-light">✕</button>
-              </div>
-              <div className="p-5 space-y-4">
-                <p className={`text-sm font-medium text-center ${dark ? "text-gray-300" : "text-gray-700"}`}>Are you sure you want to buy this product?</p>
-                <div className={`flex items-center gap-3 p-3 rounded-xl border ${dark ? "bg-white/5 border-white/10" : "bg-gray-50 border-gray-200"}`}>
-                  <img src={image} alt={title} className="w-14 h-14 object-contain rounded-lg bg-white p-1 flex-shrink-0" loading="lazy" />
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-xs font-semibold truncate ${dark ? "text-white" : "text-gray-800"}`}>{title}</p>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <span className="text-[11px] text-violet-400">Qty: {qty}</span>
-                      {size && <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${dark ? "bg-violet-500/20 text-violet-300" : "bg-violet-100 text-violet-700"}`}>Size: {size}</span>}
-                    </div>
-                    <p className="text-sm font-bold mt-1 text-cyan-400">৳{(activePrice * qty).toFixed(2)}</p>
-                  </div>
-                </div>
-                <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-xl border transition-colors ${accepted ? dark ? "border-emerald-500/50 bg-emerald-500/10" : "border-emerald-400 bg-emerald-50" : dark ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
-                  <input type="radio" name="confirm" checked={accepted} onChange={() => setAccepted(true)} className="accent-emerald-500 w-4 h-4" />
-                  <span className={`text-sm font-medium ${accepted ? "text-emerald-500" : dark ? "text-gray-400" : "text-gray-600"}`}>✔ I accept &amp; confirm this order</span>
-                </label>
-                <TruckOrderButton onConfirm={handleTruckConfirm} disabled={!accepted} price={(activePrice * qty).toFixed(2)} />
-              </div>
-            </motion.div>
+         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setShowConfirm(false)}>
+  <motion.div
+    initial={{ opacity: 0, scale: 0.92, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+    exit={{ opacity: 0, scale: 0.92, y: 30 }} transition={{ duration: 0.25 }}
+    className={`rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden ${dark ? "bg-gray-900 border border-white/10" : "bg-white"}`}
+    onClick={e => e.stopPropagation()}>
+
+    {/* Header */}
+    <div className={`flex items-center justify-between px-5 py-4 border-b ${dark ? "border-white/10" : "border-gray-200"}`}>
+      <h3 className={`font-bold text-base flex items-center gap-2 ${dark ? "text-white" : "text-gray-800"}`}>
+        <span>🛒</span> Confirm Your Order
+      </h3>
+      <button
+        onClick={() => setShowConfirm(false)}
+        className={`w-7 h-7 flex items-center justify-center rounded-full text-lg transition-colors ${dark ? "text-gray-400 hover:text-white hover:bg-white/10" : "text-gray-400 hover:text-gray-700 hover:bg-gray-100"}`}
+      >
+        ✕
+      </button>
+    </div>
+
+    {/* Body */}
+    <div className="p-5 space-y-5">
+
+      {/* Product row */}
+      <div className={`flex items-center gap-3 p-3 rounded-xl border ${dark ? "bg-white/5 border-white/10" : "bg-gray-50 border-gray-200"}`}>
+        <img src={image} alt={title} className="w-16 h-16 object-contain rounded-lg bg-white p-1.5 flex-shrink-0" loading="lazy" />
+        <div className="flex-1 min-w-0">
+          <p className={`text-sm font-semibold leading-snug line-clamp-2 ${dark ? "text-white" : "text-gray-800"}`}>{title}</p>
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${dark ? "bg-white/10 text-gray-300" : "bg-gray-200 text-gray-600"}`}>Qty: {qty}</span>
+            {size && (
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${dark ? "bg-violet-500/20 text-violet-300" : "bg-violet-100 text-violet-700"}`}>
+                Size: {size}
+              </span>
+            )}
           </div>
+        </div>
+      </div>
+
+      {/* Price breakdown — separated as its own block */}
+      <div className={`rounded-xl border p-4 space-y-2 ${dark ? "bg-white/5 border-white/10" : "bg-gray-50 border-gray-200"}`}>
+        <div className="flex items-center justify-between text-sm">
+          <span className={dark ? "text-gray-400" : "text-gray-500"}>Item price</span>
+          <span className={`font-semibold ${dark ? "text-gray-200" : "text-gray-700"}`}>৳{(activePrice * qty).toFixed(2)}</span>
+        </div>
+        <div className="flex items-center justify-between text-sm">
+          <span className={dark ? "text-gray-400" : "text-gray-500"}>Delivery charge</span>
+          <span className={`font-semibold ${dark ? "text-gray-200" : "text-gray-700"}`}>৳120.00</span>
+        </div>
+        <div className={`flex items-center justify-between pt-2 mt-1 border-t ${dark ? "border-white/10" : "border-gray-200"}`}>
+          <span className={`text-sm font-bold ${dark ? "text-white" : "text-gray-800"}`}>Total</span>
+          <span className="text-lg font-bold text-emerald-500">৳{((activePrice * qty) + 120).toFixed(2)}</span>
+        </div>
+      </div>
+
+      {/* Confirm checkbox */}
+      <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-xl border transition-colors ${accepted ? dark ? "border-emerald-500/50 bg-emerald-500/10" : "border-emerald-400 bg-emerald-50" : dark ? "border-white/10 bg-white/5" : "border-gray-200 bg-gray-50"}`}>
+        <input type="radio" name="confirm" checked={accepted} onChange={() => setAccepted(true)} className="accent-emerald-500 w-4 h-4 flex-shrink-0" />
+        <span className={`text-sm font-medium ${accepted ? "text-emerald-500" : dark ? "text-gray-400" : "text-gray-600"}`}>
+          I accept &amp; confirm this order
+        </span>
+      </label>
+
+      <TruckOrderButton onConfirm={handleTruckConfirm} disabled={!accepted} price={((activePrice * qty) + 120).toFixed(2)} />
+    </div>
+  </motion.div>
+</div>
         )}
       </AnimatePresence>
     </div>
