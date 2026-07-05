@@ -5,10 +5,12 @@ export async function onRequest(context) {
   if (!isBot) {
     return next();
   }
+
   const id = params.id;
   const BACKEND_URL = import.meta.env.VITE_API;
   const API_KEY = "one-shop-secret-key-change-this";
   let product = null;
+
   try {
     const res = await fetch(`${BACKEND_URL}/product/${id}`, {
       headers: {
@@ -21,12 +23,15 @@ export async function onRequest(context) {
   } catch (e) {
     // fetch fail হলে ডিফল্ট OG-ই থাকবে
   }
+
   const originResponse = await next();
   if (!product) return originResponse;
 
   const title = (product.title || product.name || "ONE-SHOP") + " — ONE-SHOP";
   const rawDesc = (product.description || "").replace(/<[^>]*>/g, "").trim();
-  const description = rawDesc.slice(0, 160) || "ONE-SHOP এ এই প্রোডাক্টটি দেখুন — Cash on Delivery ও Free Shipping সুবিধাসহ।";
+  const description =
+    rawDesc.slice(0, 160) ||
+    "ONE-SHOP এ এই প্রোডাক্টটি দেখুন — Cash on Delivery ও Free Shipping সুবিধাসহ।";
 
   let image = product.thumbnail_img || product.image || "";
   if (image && !image.startsWith("http")) {
@@ -36,10 +41,9 @@ export async function onRequest(context) {
     image = "https://i.postimg.cc/1zWZfCtG/Gemini-Generated-Image-w5no2ww5no2ww5no-Photoroom.png";
   }
 
-  // ✅ বড় ইমেজ resize করে ছোট বানাও (WhatsApp preview এর জন্য)
-  if (image.startsWith("http")) {
-    image = `https://oneshop.pre.bd/cdn-cgi/image/width=1200,quality=75,format=jpeg/${image}`;
-  }
+  // ✅ wsrv.nl দিয়ে ইমেজ resize/compress করা হচ্ছে (WhatsApp/Messenger preview এর জন্য)
+  // কোনো API key/account লাগে না, ফ্রি সার্ভিস
+  image = `https://wsrv.nl/?url=${encodeURIComponent(image)}&w=1200&q=75&output=jpg`;
 
   const url = `https://oneshop.pre.bd/product/${id}`;
 
