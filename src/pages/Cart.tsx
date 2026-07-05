@@ -228,7 +228,7 @@ const Cart = () => {
     return () => obs.disconnect();
   }, [hasMore, loading, loadingMore, fetchPage]);
 
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  
 
   if (!email) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
@@ -287,13 +287,7 @@ const Cart = () => {
               <p className="text-center text-xs text-gray-600 py-2">সব items দেখা হয়েছে ✓</p>
             )}
             <div className="bg-gray-900 rounded-xl shadow-xl p-5 sm:p-6 border border-gray-800">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-xs sm:text-sm uppercase tracking-wider text-gray-500 font-semibold">Subtotal Price</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Vat & shipping calculated at checkout</p>
-                </div>
-                <p className="text-2xl sm:text-3xl font-black text-white tracking-tight">৳{subtotal.toFixed(2)}</p>
-              </div>
+           
             </div>
           </div>
         )}
