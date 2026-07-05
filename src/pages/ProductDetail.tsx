@@ -852,7 +852,7 @@ export default function ProductDetail() {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json"  ,      'ngrok-skip-browser-warning': 'true' 
 },
-      body: JSON.stringify({ productId: p._id || p.id, title: p.title || p.name, price: p.price, quantity: qty, size: size || null, image: p.image || p.thumbnail_img, email: user.email, category: p.category }),
+      body: JSON.stringify({ productId:  p.id, title: p.title || p.name, price: p.price, quantity: qty, size: size || null, image: p.image || p.thumbnail_img, email: user.email, category: p.category }),
     }).then(() => toast.success("Product added to cart!", { autoClose: 2000 }))
       .catch(() => toast.error("Failed to add product to cart."));
   }, [user, size, qty, headers]);
@@ -865,7 +865,7 @@ export default function ProductDetail() {
     const bd  = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Dhaka" }));
     const orderDateTime = `${bd.getFullYear()}-${pad(bd.getMonth()+1)}-${pad(bd.getDate())} ${pad(bd.getHours())}:${pad(bd.getMinutes())}:${pad(bd.getSeconds())}`;
     const orderData = {
-      productId: p._id || p.id, title: p.title || p.name, price: p.price,
+      productId:  p.id, title: p.title || p.name, price: p.price,
       quantity: qty, totalPrice: p.price! * qty, size: size || null,
       image: p.image || p.thumbnail_img, email: user.email, name: user.name,
       address: locationData?.address, phonenumber: locationData?.phone,
