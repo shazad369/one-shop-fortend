@@ -7,7 +7,7 @@ export async function onRequest(context) {
   }
 
   const id = params.id;
-  const BACKEND_URL = "https://shazadhossain-ih61-ma5.tail72a7a3.ts.net;
+  const BACKEND_URL = "https://shazadhossain-ih61-ma5.tail72a7a3.ts.net";
   const API_KEY = "one-shop-secret-key-change-this";
   let product = null;
 
