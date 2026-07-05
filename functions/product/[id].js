@@ -1,17 +1,13 @@
 export async function onRequest(context) {
   const { request, params, next } = context;
   const ua = request.headers.get("user-agent") || "";
-
   const isBot = /facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|bingbot|vkShare|SkypeUriPreview/i.test(ua);
-
   if (!isBot) {
     return next();
   }
-
   const id = params.id;
-  const BACKEND_URL = "https://shazadhossain-ih61-ma5.tail72a7a3.ts.net";
+  const BACKEND_URL = import.meta.env.VITE_API;
   const API_KEY = "one-shop-secret-key-change-this";
-
   let product = null;
   try {
     const res = await fetch(`${BACKEND_URL}/product/${id}`, {
@@ -25,7 +21,6 @@ export async function onRequest(context) {
   } catch (e) {
     // fetch fail হলে ডিফল্ট OG-ই থাকবে
   }
-
   const originResponse = await next();
   if (!product) return originResponse;
 
@@ -39,6 +34,11 @@ export async function onRequest(context) {
   }
   if (!image) {
     image = "https://i.postimg.cc/1zWZfCtG/Gemini-Generated-Image-w5no2ww5no2ww5no-Photoroom.png";
+  }
+
+  // ✅ বড় ইমেজ resize করে ছোট বানাও (WhatsApp preview এর জন্য)
+  if (image.startsWith("http")) {
+    image = `https://oneshop.pre.bd/cdn-cgi/image/width=1200,quality=75,format=jpeg/${image}`;
   }
 
   const url = `https://oneshop.pre.bd/product/${id}`;
