@@ -7,6 +7,17 @@ const API_KEY = import.meta.env.VITE_API_KEY;
 const LIMIT   = 4;
 const CACHE_TTL = 5 * 60 * 1000; // 5 মিনিট
 
+// ── image URL helper (Cloudinary fetch + fallback) ─────────────
+const CLOUD_NAME = 'dittlxqip'; // তোমার cloudinary cloud name
+const PLACEHOLDER_IMG = '/placeholder-product.png'; // public folder এ এই নামে একটা fallback image রাখো
+
+const getOptimizedImageUrl = (originalUrl?: string) => {
+  if (!originalUrl) return PLACEHOLDER_IMG;
+  const encoded = encodeURIComponent(originalUrl);
+  return `https://res.cloudinary.com/${CLOUD_NAME}/image/fetch/w_200,h_200,c_fit,f_auto,q_70/${encoded}`;
+};
+// ────────────────────────────────────────────────────────────
+
 // ── cache helpers ─────────────────────────────────────────────
 const cacheKey  = (email: string, page: number) => `cart_${email}_page_${page}`;
 
@@ -48,7 +59,7 @@ interface CartItem {
   rating?: { rate: number; count: number };
 }
 
-// ── skeleton & card components (অপরিবর্তিত) ──────────────────
+// ── skeleton & card components ──────────────────
 const SkeletonCard = () => (
   <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden animate-pulse">
     <div className="flex gap-4 p-4">
@@ -64,7 +75,7 @@ const SkeletonCard = () => (
       <div className="h-8 bg-gray-800 rounded-xl w-20" />
     </div>
   </div>
-); 
+);
 
 
 const CartItemCard = ({ item }: { item: CartItem }) => (
@@ -75,7 +86,18 @@ const CartItemCard = ({ item }: { item: CartItem }) => (
   <div className="bg-gray-900 rounded-xl shadow-lg border border-gray-800/80 hover:border-gray-700 transition-all duration-300 overflow-hidden">
     <div className="flex gap-4 p-4">
       <div className="w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 bg-gray-800 rounded-xl p-2 border border-gray-700/50 flex items-center justify-center">
-        <img src={item.image} alt={item.title} className="max-w-full max-h-full object-contain" />
+        <img
+          src={getOptimizedImageUrl(item.image)}
+          alt={item.title}
+          loading="lazy"
+          onError={(e) => {
+            const img = e.currentTarget;
+            if (img.src !== window.location.origin + PLACEHOLDER_IMG) {
+              img.src = PLACEHOLDER_IMG; // Cloudinary-ও fail করলে local fallback
+            }
+          }}
+          className="max-w-full max-h-full object-contain"
+        />
       </div>
       <div className="flex-1 min-w-0 space-y-1.5">
         <h2 className="text-sm sm:text-base font-bold text-white line-clamp-2 leading-snug">{item.title}</h2>
