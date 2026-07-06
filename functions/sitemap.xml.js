@@ -86,7 +86,7 @@ ${allUrls
     headers: {
       "Content-Type": "application/xml",
       // ✅ 3 din (259200 seconds) cache thakbe Cloudflare edge e
-      "Cache-Control": "public, max-age=259200, s-maxage=259200",
+      "Cache-Control": "public, max-age=259200, s-maxage=604800",
     },
   });
 
