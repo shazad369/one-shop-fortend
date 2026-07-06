@@ -1,6 +1,6 @@
 export async function onRequest(context) {
   // তোমার backend theke shob product fetch koro
-  const response = await fetch('https://your-tailscale-backend-url/shopdata');
+  const response = await fetch('https://debian.tail72a7a3.ts.net/shopdata');
   const products = await response.json();
 
   const urls = products.map(p => `
