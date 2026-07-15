@@ -4,38 +4,88 @@ export async function onRequest(context) {
   const API_KEY = "one-shop-secret-key-change-this";
   const SITE_URL = "https://oneshop.pre.bd";
 
-  // ✅ Cache check - Cloudflare cache theke age dekhbe age generate kora sitemap ache kina
+  // ✅ Cron worker theke asa force-refresh request check kora
+  // Ei secret ta cron-refresh-sitemap.js er REFRESH_SECRET er sathe match korte hobe
+  const REFRESH_SECRET = "one-shop-cron-refresh-2026";
+  const url = new URL(request.url);
+  const isForceRefresh = url.searchParams.get("refresh") === REFRESH_SECRET;
+
+  // ✅ Canonical cache key - refresh param bade, tai shob normal visitor + cron
+  // duijoni ekই cache entry pabe/update korbe
+  const canonicalUrl = `${SITE_URL}/sitemap.xml`;
   const cache = caches.default;
-  const cacheKey = new Request(request.url, request);
-  let cached = await cache.match(cacheKey);
-  if (cached) {
-    return cached;
+  const cacheKey = new Request(canonicalUrl, request);
+
+  if (!isForceRefresh) {
+    let cached = await cache.match(cacheKey);
+    if (cached) {
+      return cached;
+    }
+  }
+
+  const LIMIT = 20;
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY_MS = 500;
+  const REQUEST_DELAY_MS = 250;
+  const MAX_PAGES = 400;
+
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  async function fetchPage(page) {
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const res = await fetch(`${BACKEND_URL}/shopdata?page=${page}`, {
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": API_KEY,
+            "ngrok-skip-browser-warning": "true",
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          return data.products || data.data || (Array.isArray(data) ? data : []);
+        }
+        console.log(`Page ${page} failed with status ${res.status}, attempt ${attempt}/${MAX_RETRIES}`);
+      } catch (e) {
+        console.log(`Page ${page} fetch error: ${e.message}, attempt ${attempt}/${MAX_RETRIES}`);
+      }
+
+      if (attempt < MAX_RETRIES) {
+        await sleep(RETRY_DELAY_MS * attempt);
+      }
+    }
+    return null;
   }
 
   let allIds = [];
-  const LIMIT = 20; // প্রতি page e koyta product ashe (tomar API onujayi)
   let page = 1;
   let hasMore = true;
+  let consecutiveFailures = 0;
+  const MAX_CONSECUTIVE_FAILURES = 5;
 
   try {
-    while (hasMore) {
-      const res = await fetch(`${BACKEND_URL}/shopdata?page=${page}`, {
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": API_KEY,
-          "ngrok-skip-browser-warning": "true",
-        },
-      });
+    while (hasMore && page <= MAX_PAGES) {
+      const products = await fetchPage(page);
 
-      if (!res.ok) break;
+      if (products === null) {
+        consecutiveFailures++;
+        console.log(`Skipping page ${page} after ${MAX_RETRIES} failed retries`);
 
-      const data = await res.json();
+        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+          console.log(`Stopping: ${MAX_CONSECUTIVE_FAILURES} consecutive page failures`);
+          hasMore = false;
+          break;
+        }
 
-      // ✅ Backend response structure onujayi products array ber kora
-      // Common patterns: data.products, data.data, ba shorasori array
-      const products = data.products || data.data || (Array.isArray(data) ? data : []);
+        page++;
+        await sleep(REQUEST_DELAY_MS);
+        continue;
+      }
 
-      if (!products || products.length === 0) {
+      consecutiveFailures = 0;
+
+      if (products.length === 0) {
         hasMore = false;
         break;
       }
@@ -44,18 +94,18 @@ export async function onRequest(context) {
         if (p.id) allIds.push(p.id);
       });
 
-      // Jodi page e product shongkha LIMIT theke kom hoy, tahole eta shesh page
       if (products.length < LIMIT) {
         hasMore = false;
       }
 
       page++;
 
-      // Safety limit - infinite loop thekano jonno (max 250 pages = 5000 products)
-      if (page > 250) break;
+      if (hasMore) {
+        await sleep(REQUEST_DELAY_MS);
+      }
     }
   } catch (e) {
-    // Backend fetch fail hole empty sitemap na diye already thaka static URLs die response dibo
+    console.log(`Sitemap generation error: ${e.message}`);
   }
 
   const staticUrls = [
@@ -85,13 +135,13 @@ ${allUrls
   const response = new Response(xml, {
     headers: {
       "Content-Type": "application/xml",
-      // ✅ 3 din (259200 seconds) cache thakbe Cloudflare edge e
-      "Cache-Control": "public, max-age=259200, s-maxage=604800",
+      // ✅ 7 din cache - cron worker proti 7 din e nijei force-refresh kore
+      // die cache fresh rakhbe, kar visit lagbe na
+      "Cache-Control": "public, max-age=604800, s-maxage=604800",
     },
   });
 
-  // ✅ Cache e save kore rakhbe porer visitor der jonno
   context.waitUntil(cache.put(cacheKey, response.clone()));
 
   return response;
-}
+    }
