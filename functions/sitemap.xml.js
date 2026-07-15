@@ -5,13 +5,11 @@ export async function onRequest(context) {
   const SITE_URL = "https://oneshop.pre.bd";
 
   // ✅ Cron worker theke asa force-refresh request check kora
-  // Ei secret ta cron-refresh-sitemap.js er REFRESH_SECRET er sathe match korte hobe
   const REFRESH_SECRET = "one-shop-cron-refresh-2026";
   const url = new URL(request.url);
   const isForceRefresh = url.searchParams.get("refresh") === REFRESH_SECRET;
 
-  // ✅ Canonical cache key - refresh param bade, tai shob normal visitor + cron
-  // duijoni ekই cache entry pabe/update korbe
+  // ✅ Canonical cache key - refresh param bade
   const canonicalUrl = `${SITE_URL}/sitemap.xml`;
   const cache = caches.default;
   const cacheKey = new Request(canonicalUrl, request);
@@ -23,18 +21,22 @@ export async function onRequest(context) {
     }
   }
 
-  const LIMIT = 20;
+  // ✅ Per page e 200 ta product - eta guruttopurno!
+  // Cloudflare Free plan e ekta invocation e max 50 ta subrequest (fetch call) pathano jay.
+  // 5705 ta product / 200 per page = maximum 29 ta request lagbe, tai eta 50 er niche thakbe.
+  const LIMIT = 200;
   const MAX_RETRIES = 3;
   const RETRY_DELAY_MS = 500;
   const REQUEST_DELAY_MS = 250;
-  const MAX_PAGES = 400;
+  const MAX_PAGES = 40; // safety limit (40 * 200 = 8000 products - egiye rakha holo)
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   async function fetchPage(page) {
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
-        const res = await fetch(`${BACKEND_URL}/shopdata?page=${page}`, {
+        // ✅ limit=${LIMIT} pathano hocche, tai backend proti page e 200 ta product dibe
+        const res = await fetch(`${BACKEND_URL}/shopdata?page=${page}&limit=${LIMIT}`, {
           headers: {
             "Content-Type": "application/json",
             "x-api-key": API_KEY,
@@ -136,7 +138,6 @@ ${allUrls
     headers: {
       "Content-Type": "application/xml",
       // ✅ 7 din cache - cron worker proti 7 din e nijei force-refresh kore
-      // die cache fresh rakhbe, kar visit lagbe na
       "Cache-Control": "public, max-age=604800, s-maxage=604800",
     },
   });
@@ -144,4 +145,4 @@ ${allUrls
   context.waitUntil(cache.put(cacheKey, response.clone()));
 
   return response;
-    }
+}
