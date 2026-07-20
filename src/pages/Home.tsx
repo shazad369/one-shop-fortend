@@ -55,6 +55,13 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1], delay },
 });
 
+// 👉 mobile category banner slideshow images — change/add links here easily
+const MOBILE_CATEGORY_BANNER_IMAGES = [
+  "https://i.postimg.cc/3JKrHN67/file-00000000dc848230ae550dae8958b8f8.png",
+  "https://i.postimg.cc/3JKrHN67/file-00000000dc848230ae550dae8958b8f8.png",
+  "https://i.postimg.cc/3JKrHN67/file-00000000dc848230ae550dae8958b8f8.png",
+];
+
 export default function Home() {
   const { dark } = useTheme();
 
@@ -117,9 +124,10 @@ export default function Home() {
       const response = await fetch(siteConfig.productApiUrl, {
         method: "GET",
         headers: {
-          "Content-Type": "application/json",
+           "Content-Type": "application/json",
   "x-api-key": import.meta.env.VITE_API_KEY,
   'ngrok-skip-browser-warning': 'true'
+
         },
       });
 
@@ -196,9 +204,25 @@ export default function Home() {
         <link rel="canonical" href={window.location.origin} />
       </Helmet>
 
+      {/* Mobile-only slideshow keyframes: hold each image ~3s, then slide slowly to the next */}
+      <style>{`
+        @keyframes mobileCategorySlide {
+          0%   { transform: translateX(0); }
+          22%  { transform: translateX(0); }
+          33%  { transform: translateX(-100vw); }
+          55%  { transform: translateX(-100vw); }
+          66%  { transform: translateX(-200vw); }
+          88%  { transform: translateX(-200vw); }
+          100% { transform: translateX(-300vw); }
+        }
+        .mobile-category-slide-track {
+          animation: mobileCategorySlide 13.5s ease-in-out infinite;
+        }
+      `}</style>
+
       <div className="overflow-hidden">
         {/* HERO */}
-        <section className="relative min-h-[75vh] sm:min-h-screen flex items-center pt-16 sm:pt-20">
+        <section className="relative min-h-[60vh] sm:min-h-screen flex items-center pt-10 sm:pt-20">
           <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
             <div
               className={`absolute -top-16 -left-24 w-72 sm:w-[480px] h-72 sm:h-[480px] rounded-full blur-[140px] opacity-25 ${
@@ -222,8 +246,8 @@ export default function Home() {
             )}
           </div>
 
-          <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 lg:py-24">
-            <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-20 lg:py-24">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
               <div>
                 <motion.div
                   {...fadeUp(0)}
@@ -249,7 +273,7 @@ export default function Home() {
 
                 <motion.p
                   {...fadeUp(0.16)}
-                  className={`text-base sm:text-lg leading-relaxed mb-7 sm:mb-9 max-w-[460px] ${mutedText}`}
+                  className={`text-base sm:text-lg leading-relaxed mb-5 sm:mb-9 max-w-[460px] ${mutedText}`}
                 >
                   {siteConfig.hero.subtitle}
                 </motion.p>
@@ -283,7 +307,7 @@ export default function Home() {
 
                 <motion.div
                   {...fadeUp(0.32)}
-                  className={`flex flex-wrap gap-3 mt-8 sm:mt-10 pt-8 sm:pt-10 border-t ${
+                  className={`flex flex-wrap gap-3 mt-6 sm:mt-10 pt-6 sm:pt-10 border-t ${
                     dark ? "border-white/8" : "border-gray-100"
                   }`}
                 >
@@ -311,10 +335,10 @@ export default function Home() {
         </section>
 
         {/* CATEGORIES */}
-        <section className="py-12 sm:py-16 lg:py-20">
+        <section className="py-6 sm:py-16 lg:py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <AnimatedSection>
-              <div className="text-center mb-10 sm:mb-14">
+              <div className="hidden sm:block text-center mb-10 sm:mb-14">
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 tracking-tight">
                   Shop by{" "}
                   <span className="gradient-text font-display italic">Category</span>
@@ -325,7 +349,30 @@ export default function Home() {
               </div>
             </AnimatedSection>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
+            {/* Mobile-only: category banner slideshow (3s hold, slow slide, desktop unaffected) */}
+            <div className="sm:hidden overflow-hidden rounded-2xl">
+              <div className="flex w-max mobile-category-slide-track">
+                {MOBILE_CATEGORY_BANNER_IMAGES.map((src, i) => (
+                  <img
+                    key={i}
+                    src={src}
+                    alt={i === 0 ? "Shop by Category" : ""}
+                    aria-hidden={i === 0 ? undefined : "true"}
+                    className="h-auto w-screen max-w-none object-cover flex-shrink-0"
+                  />
+                ))}
+                {/* duplicate of the first image so the loop snaps back seamlessly */}
+                <img
+                  src={MOBILE_CATEGORY_BANNER_IMAGES[0]}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-auto w-screen max-w-none object-cover flex-shrink-0"
+                />
+              </div>
+            </div>
+
+            {/* Desktop/tablet: original category cards grid (unchanged) */}
+            <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
               {siteConfig.categories.map((cat, i) => (
                 <AnimatedSection key={cat.name} delay={i * 0.07}>
                   <Link to="/shop">
@@ -373,11 +420,11 @@ export default function Home() {
      
              <Shop></Shop>
         {/* CTA BANNER */}
-        <section className="py-12 sm:py-16 lg:py-24">
+        <section className="py-8 sm:py-16 lg:py-24">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <AnimatedSection>
               <div
-                className={`relative rounded-3xl overflow-hidden p-8 sm:p-12 lg:p-16 text-center ${
+                className={`relative rounded-3xl overflow-hidden p-6 sm:p-12 lg:p-16 text-center ${
                   dark
                     ? "bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-500/10 border border-white/8"
                     : "bg-gradient-to-br from-violet-50 via-white to-cyan-50 border border-violet-100"
@@ -431,3 +478,8 @@ export default function Home() {
     </>
   );
 }
+
+
+
+
+
