@@ -913,7 +913,7 @@ export default function ProductDetail() {
   const title       = product.title || product.name || "";
   const image       = product.image || product.thumbnail_img || "";
   const description = product.description || product.details || "";
-const activePrice = product.sale_price ?? product.price ?? 0;
+  const activePrice = product.sale_price!;
   const images      = product.product_images || [];
   const { displayPrice, discountPct } = priceData!;
 
