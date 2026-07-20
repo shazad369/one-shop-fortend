@@ -595,7 +595,7 @@ const CategoryCard = memo(function CategoryCard({ p, isCur, dark, onNavigate }: 
   const pname = p.name || p.title || "Product";
   const pimg  = p.image || p.thumbnail_img || "";
   const pcat  = p.category || "General";
-  const pSalePrice = p.sale_price ?? p.sale_price!;
+const pSalePrice = p.sale_price ?? p.price ?? 0;
   const { displayPrice: pDisplay, discountPct: pDisc } = getInflatedPrice(pSalePrice);
   const pFinal = pSalePrice;
 
@@ -913,7 +913,7 @@ export default function ProductDetail() {
   const title       = product.title || product.name || "";
   const image       = product.image || product.thumbnail_img || "";
   const description = product.description || product.details || "";
-  const activePrice = product.sale_price!;
+const activePrice = product.sale_price ?? product.price ?? 0;
   const images      = product.product_images || [];
   const { displayPrice, discountPct } = priceData!;
 
