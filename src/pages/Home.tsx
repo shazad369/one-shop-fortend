@@ -57,10 +57,11 @@ const fadeUp = (delay = 0) => ({
 
 // 👉 mobile category banner slideshow images — change/add links here easily
 const MOBILE_CATEGORY_BANNER_IMAGES = [
-  "https://i.postimg.cc/3JKrHN67/file-00000000dc848230ae550dae8958b8f8.png",
-  "https://i.postimg.cc/3JKrHN67/file-00000000dc848230ae550dae8958b8f8.png",
-  "https://i.postimg.cc/3JKrHN67/file-00000000dc848230ae550dae8958b8f8.png",
+  "/file_0000000064b8820baf2d148b43b757e0.png",
+  "/file_0000000064b8820baf2d148b43b757e0.png",
+  "/file_0000000064b8820baf2d148b43b757e0.png",
 ];
+
 
 export default function Home() {
   const { dark } = useTheme();
