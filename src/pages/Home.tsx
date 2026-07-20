@@ -222,7 +222,8 @@ export default function Home() {
 
       <div className="overflow-hidden">
         {/* HERO */}
-        <section className="relative min-h-[60vh] sm:min-h-screen flex items-center pt-10 sm:pt-20">
+        <section className="relative min-h-[60vh] sm:min-h-screen flex items-center pt-14 sm:pt-20">
+
           <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
             <div
               className={`absolute -top-16 -left-24 w-72 sm:w-[480px] h-72 sm:h-[480px] rounded-full blur-[140px] opacity-25 ${
@@ -236,6 +237,7 @@ export default function Home() {
             />
             {dark && (
               <div
+
                 className="absolute inset-0 opacity-[0.03]"
                 style={{
                   backgroundImage:
@@ -244,7 +246,9 @@ export default function Home() {
                 }}
               />
             )}
+
           </div>
+
 
           <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-20 lg:py-24">
             <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
@@ -269,6 +273,7 @@ export default function Home() {
                   <span className="gradient-text font-display italic">
                     {siteConfig.hero.titleHighlight}
                   </span>
+
                 </motion.h1>
 
                 <motion.p
@@ -277,6 +282,29 @@ export default function Home() {
                 >
                   {siteConfig.hero.subtitle}
                 </motion.p>
+
+                {/* Mobile-only category banner slideshow — margin added so it
+                    doesn't sit flush against the paragraph above / buttons below */}
+                <div className="sm:hidden overflow-hidden rounded-2xl mt-5 mb-7">
+                  <div className="flex w-max mobile-category-slide-track">
+                    {MOBILE_CATEGORY_BANNER_IMAGES.map((src, i) => (
+                      <img
+                        key={i}
+                        src={src}
+                        alt={i === 0 ? "Shop by Category" : ""}
+                        aria-hidden={i === 0 ? undefined : "true"}
+                        className="h-auto w-screen max-w-none object-cover flex-shrink-0"
+                      />
+                    ))}
+                    {/* duplicate of the first image so the loop snaps back seamlessly */}
+                    <img
+                      src={MOBILE_CATEGORY_BANNER_IMAGES[0]}
+                      alt=""
+                      aria-hidden="true"
+                      className="h-auto w-screen max-w-none object-cover flex-shrink-0"
+                    />
+                  </div>
+                </div>
 
                 <motion.div {...fadeUp(0.24)} className="flex flex-wrap gap-3 sm:gap-4">
                   <Link to={siteConfig.hero.ctaLink}>
@@ -325,7 +353,7 @@ export default function Home() {
                     </span>
                   ))}
                 </motion.div>
-                
+
               </div>
 
               {/* ✅ Coverflow Carousel — properly imported component */}
@@ -334,8 +362,10 @@ export default function Home() {
           </div>
         </section>
 
+
+
         {/* CATEGORIES */}
-        <section className="py-6 sm:py-16 lg:py-20">
+        <section className="py-9 sm:py-16 lg:py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <AnimatedSection>
               <div className="hidden sm:block text-center mb-10 sm:mb-14">
@@ -348,28 +378,6 @@ export default function Home() {
                 </p>
               </div>
             </AnimatedSection>
-
-            {/* Mobile-only: category banner slideshow (3s hold, slow slide, desktop unaffected) */}
-            <div className="sm:hidden overflow-hidden rounded-2xl">
-              <div className="flex w-max mobile-category-slide-track">
-                {MOBILE_CATEGORY_BANNER_IMAGES.map((src, i) => (
-                  <img
-                    key={i}
-                    src={src}
-                    alt={i === 0 ? "Shop by Category" : ""}
-                    aria-hidden={i === 0 ? undefined : "true"}
-                    className="h-auto w-screen max-w-none object-cover flex-shrink-0"
-                  />
-                ))}
-                {/* duplicate of the first image so the loop snaps back seamlessly */}
-                <img
-                  src={MOBILE_CATEGORY_BANNER_IMAGES[0]}
-                  alt=""
-                  aria-hidden="true"
-                  className="h-auto w-screen max-w-none object-cover flex-shrink-0"
-                />
-              </div>
-            </div>
 
             {/* Desktop/tablet: original category cards grid (unchanged) */}
             <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
@@ -417,10 +425,10 @@ export default function Home() {
         </section>
 
         {/* FEATURED PRODUCTS */}
-     
+
              <Shop></Shop>
         {/* CTA BANNER */}
-        <section className="py-8 sm:py-16 lg:py-24">
+        <section className="py-11 sm:py-16 lg:py-24">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <AnimatedSection>
               <div
@@ -478,8 +486,3 @@ export default function Home() {
     </>
   );
 }
-
-
-
-
-
