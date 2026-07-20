@@ -905,7 +905,7 @@ export default function ProductDetail() {
   return (
     <div className="pt-20 sm:pt-24 pb-12 sm:pb-20 min-h-screen">
       <Helmet>
-        <title>{title} | ONE-SHOP Bangladesh — Cash on Delivery</title>
+      <title>{`${title} | ONE-SHOP Bangladesh — Cash on Delivery`}</title>
         <meta name="description" content={`${title} কিনুন ONE-SHOP এ। মাত্র ৳${activePrice} টাকায়। Cash on Delivery ও Free Shipping সারাদেশে।`} />
         <meta name="keywords" content={`${title}, ${title} বাংলাদেশ, ${product.category} online bangladesh, cash on delivery, free shipping bd`} />
         <link rel="canonical" href={window.location.href} />
