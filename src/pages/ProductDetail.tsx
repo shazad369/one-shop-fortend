@@ -46,6 +46,13 @@ const API_KEY        = `${import.meta.env.VITE_API_KEY}`;
 const SAME_CAT_LIMIT = 20;
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔧 DAILY DISCOUNT CONTROL — .env ফাইলে VITE_PRODUCTDETAILS_DISCOUNT_PERCENT
+// বদলান, কোনো code touch করা লাগবে না। .env বদলে rebuild/redeploy করলেই হবে।
+// .env এ না থাকলে বা ভুল value দিলে ডিফল্ট 50% ব্যবহার হবে।
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const DISCOUNT_PERCENT = Number(import.meta.env.VITE_PRODUCTDETAILS_DISCOUNT_PERCENT) || 50;
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CACHE LAYER
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const memCache = {
@@ -242,9 +249,16 @@ return (
 const needsSize = (p: Product): boolean =>
   SIZE_KW.some(kw => [p.title, p.name, p.category, (p as any).description].join(" ").toLowerCase().includes(kw));
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PRICE / DISCOUNT DISPLAY
+// sale_price-ই আসল দাম। এইখান থেকে reverse করে "কাটা দাগ" দেওয়া দাম
+// বের করা হয়, যাতে DISCOUNT_PERCENT এর সাথে % ঠিকঠাক মিলে যায়।
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const getInflatedPrice = (price: number) => {
-  const disp = Math.round((price + 120) / 0.90);
-  return { displayPrice: disp, discountPct: Math.round(((disp - price - 120) / disp) * 100) };
+  // Exact/true discount: crossed price theke sale_price a thik DISCOUNT_PERCENT% off e ashe
+  // jemon: sale_price=480, DISCOUNT_PERCENT=50 → crossed=960, r 960 theke 50% off = 480 (exact match)
+  const displayPrice = Math.round(price / (1 - DISCOUNT_PERCENT / 100));
+  return { displayPrice, discountPct: DISCOUNT_PERCENT };
 };
 
 const cleanText = (r: string) =>
@@ -581,8 +595,9 @@ const CategoryCard = memo(function CategoryCard({ p, isCur, dark, onNavigate }: 
   const pname = p.name || p.title || "Product";
   const pimg  = p.image || p.thumbnail_img || "";
   const pcat  = p.category || "General";
-  const { displayPrice: pDisplay, discountPct: pDisc } = getInflatedPrice(p.price!);
-  const pFinal = p.price! + 120;
+  const pSalePrice = p.sale_price ?? p.sale_price!;
+  const { displayPrice: pDisplay, discountPct: pDisc } = getInflatedPrice(pSalePrice);
+  const pFinal = pSalePrice;
 
   const inner = (
     <div className={`rounded-2xl overflow-hidden transition-all duration-300
@@ -839,7 +854,7 @@ export default function ProductDetail() {
   const descLines = useMemo(() => fmtDesc(product?.description || product?.details || ""), [product]);
   const features  = useMemo(() => parseFeatures(product?.description || product?.details || ""), [product]);
   const showSize  = useMemo(() => product ? needsSize(product) : false, [product]);
-  const priceData = useMemo(() => product ? getInflatedPrice(product.price!) : null, [product]);
+  const priceData = useMemo(() => product ? getInflatedPrice(product.sale_price!) : null, [product]);
   const pid       = product ? String(product.id) : "";
 
   // ─── Callbacks ─────────────────────────────────────────────────
@@ -898,14 +913,14 @@ export default function ProductDetail() {
   const title       = product.title || product.name || "";
   const image       = product.image || product.thumbnail_img || "";
   const description = product.description || product.details || "";
-  const activePrice = product.price!;
+  const activePrice = product.sale_price!;
   const images      = product.product_images || [];
   const { displayPrice, discountPct } = priceData!;
 
   return (
     <div className="pt-20 sm:pt-24 pb-12 sm:pb-20 min-h-screen">
       <Helmet>
-      <title>{`${title} | ONE-SHOP Bangladesh — Cash on Delivery`}</title>
+        <title>{title} | ONE-SHOP Bangladesh — Cash on Delivery</title>
         <meta name="description" content={`${title} কিনুন ONE-SHOP এ। মাত্র ৳${activePrice} টাকায়। Cash on Delivery ও Free Shipping সারাদেশে।`} />
         <meta name="keywords" content={`${title}, ${title} বাংলাদেশ, ${product.category} online bangladesh, cash on delivery, free shipping bd`} />
         <link rel="canonical" href={window.location.href} />
