@@ -49,6 +49,20 @@ const shimmerStyle = `
   }
 `;
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔧 DAILY DISCOUNT CONTROL — .env ফাইলে VITE_PRODUCTDETAILS_DISCOUNT_PERCENT
+// বদলান, কোনো code touch করা লাগবে না। .env বদলে rebuild/redeploy করলেই হবে।
+// .env এ না থাকলে বা ভুল value দিলে ডিফল্ট 50% ব্যবহার হবে।
+// (ProductDetail.tsx এর সাথে consistent — একই env variable ব্যবহার হচ্ছে)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const DISCOUNT_PERCENT = Number(import.meta.env.VITE_PRODUCTDETAILS_DISCOUNT_PERCENT) || 50;
+
+const getInflatedPrice = (price: number) => {
+  // Exact/true discount: crossed price theke sale_price a thik DISCOUNT_PERCENT% off e ashe
+  const displayPrice = Math.round(price / (1 - DISCOUNT_PERCENT / 100));
+  return { displayPrice, discountPct: DISCOUNT_PERCENT };
+};
+
 export default memo(function ProductCard({ product, index = 99 }: Props) {
   const { dark } = useTheme();
   const isAboveFold = index < 8; // একটু বেশি রাখলাম
@@ -83,10 +97,9 @@ export default memo(function ProductCard({ product, index = 99 }: Props) {
   }, [imgSrc, isAboveFold, cached]);
 
   // ─── Inflated Price System ────────────────────────────────────────────────
-  const realPrice   = product.sale_price;
-  const realTotal   = realPrice;
-  const displayPrice = Math.round(realTotal / 0.50);
-  const discountPct  = Math.round(((displayPrice - realTotal) / displayPrice) * 100);
+  // sale_price missing/undefined হলে price fallback, শেষে 0 — কখনো undefined না
+  const realTotal = product.sale_price ?? product.price ?? 0;
+  const { displayPrice, discountPct } = getInflatedPrice(realTotal);
 
   return (
     <Link to={`/product/${product.id}`}>
