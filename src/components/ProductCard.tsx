@@ -83,9 +83,9 @@ export default memo(function ProductCard({ product, index = 99 }: Props) {
   }, [imgSrc, isAboveFold, cached]);
 
   // ─── Inflated Price System ────────────────────────────────────────────────
-  const realPrice   = product.price;
+  const realPrice   = product.sale_price;
   const realTotal   = realPrice;
-  const displayPrice = Math.round(realTotal / 0.90);
+  const displayPrice = Math.round(realTotal / 0.50);
   const discountPct  = Math.round(((displayPrice - realTotal) / displayPrice) * 100);
 
   return (
