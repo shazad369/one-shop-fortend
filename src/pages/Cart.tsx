@@ -119,8 +119,8 @@ const CartItemCard = ({ item }: { item: CartItem }) => (
     </div>
     <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-gray-800 bg-gray-900/60">
       <div className="flex items-baseline gap-3 flex-wrap">
-        <p className="text-xl font-black text-emerald-400">৳{((item.price + 120) * item.quantity).toFixed(2)}</p>
-        <p className="text-xs text-gray-500">৳{item.price+120} × {item.quantity}</p>
+        <p className="text-xl font-black text-emerald-400">৳{((item.price ) * item.quantity).toFixed(2)}</p>
+        <p className="text-xs text-gray-500">৳{item.price} × {item.quantity}</p>
       </div>
       <div
        
