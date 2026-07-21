@@ -1,4 +1,3 @@
-
 // src/components/Shop.tsx
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Search, X, Clock, TrendingUp, ChevronUp } from "lucide-react";
@@ -408,7 +407,6 @@ const DICTIONARY: Record<string, string[]> = {
   "jama": ["jama","jama","zama","jama","jama"],
   "kapor": ["kapor","kapour","kapur","kapor","kapur"],
   "gamcha": ["gamsha","gomcha","gamsa","gamcha","gomcha"],
-  "tupi": ["topy","toopi","tupi","tuppi","toopi","tupy","toppee"],
   "koshai": ["kosai","koshai","kosai","koshai"],
   "goru": ["goru","goru","gour","goru"],
   "qurbani": ["kurbani","qurbani","kurbani","qurbani","kurbani"],
@@ -583,6 +581,33 @@ function saveHistory(history: string[]) {
     sessionStorage.setItem(HISTORY_KEY, JSON.stringify(history));
   } catch {}
 }
+
+// ════════════════════════════════════════════════════════════════════
+// 🎨 CATEGORY ICON ROW — fallback colors (যখন ছবি নেই)
+// ════════════════════════════════════════════════════════════════════
+const CATEGORY_TILE_COLORS = [
+  "linear-gradient(135deg,#f97316,#fb923c)",
+  "linear-gradient(135deg,#eab308,#facc15)",
+  "linear-gradient(135deg,#8b5cf6,#a78bfa)",
+  "linear-gradient(135deg,#ec4899,#f472b6)",
+  "linear-gradient(135deg,#7c3aed,#a855f7)",
+  "linear-gradient(135deg,#059669,#10b981)",
+  "linear-gradient(135deg,#6366f1,#818cf8)",
+  "linear-gradient(135deg,#dc2626,#f87171)",
+  "linear-gradient(135deg,#0891b2,#22d3ee)",
+  "linear-gradient(135deg,#65a30d,#a3e635)",
+];
+
+// ════════════════════════════════════════════════════════════════════
+// 🖼️ CATEGORY IMAGES — key = category-র নাম (lowercase), value = ছবির URL/path
+// ছবি না থাকলে automatically রঙিন letter-tile দেখাবে (fallback)
+// ════════════════════════════════════════════════════════════════════
+const CATEGORY_IMAGES: Record<string, string> = {
+  offer: "./delevery.jpeg",
+  // fashion: "https://your-cdn.com/categories/fashion.png",
+  // gadget: "/images/categories/gadget.png",
+  // এখানে আপনার backend থেকে আসা category-র নাম (lowercase) আর ছবির path/URL বসান
+};
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────
 export default function Shop() {
@@ -884,18 +909,63 @@ export default function Shop() {
 
   // ─── RENDER ────────────────────────────────────────────────────────
   return (
-    <div className="pt-20 sm:pt-24 pb-12 sm:pb-20 min-h-screen">
+    <div className="pt-2 sm:pt-2 pb-12 translate-y-[60px] sm:pb-20 min-h-screen">
       <Helmet>
         <title>ONE-SHOP — Premium E-Commerce</title>
       </Helmet>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <AnimatedSection>
-          <div className="text-center mb-8 sm:mb-12">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">
-              Our{" "}
-              <span className="gradient-text font-display italic">Shop</span>
-            </h1>
+          <div className="mb-6 sm:mb-8 -mx-3 sm:mx-0 px-3 sm:px-0">
+            <div
+              className="grid grid-rows-2 grid-flow-col auto-cols-[74px] gap-x-3 gap-y-3.5 overflow-x-auto pb-1 snap-x snap-mandatory sm:grid-rows-none sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-6 lg:grid-cols-8 sm:gap-x-5 sm:gap-y-6 sm:overflow-visible sm:pb-0 sm:snap-none sm:justify-items-center"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {categories
+                .filter((cat) => cat && cat !== "all")
+                .map((cat, i) => {
+                  const label = String(cat);
+                  const imageSrc = CATEGORY_IMAGES[label.toLowerCase()];
+
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => setCategory(label)}
+                      className="flex flex-col items-center gap-1.5 snap-start"
+                    >
+                      <div
+                        className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-white text-base sm:text-lg font-bold shadow-sm transition-transform active:scale-95 overflow-hidden ${
+                          category === label ? "ring-2 ring-violet-500 ring-offset-2" : ""
+                        } ${dark ? "ring-offset-black" : "ring-offset-white"}`}
+                        style={
+                          !imageSrc
+                            ? { background: CATEGORY_TILE_COLORS[i % CATEGORY_TILE_COLORS.length] }
+                            : undefined
+                        }
+                      >
+                        {imageSrc ? (
+                          <img
+                            src={imageSrc}
+                            alt={label}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          label.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <span
+                        className={`text-[10px] sm:text-xs text-center leading-tight capitalize line-clamp-2 max-w-[70px] sm:max-w-[86px] ${
+                          dark ? "text-gray-300" : "text-gray-700"
+                        }`}
+                      >
+                        {label}
+                      </span>
+                    </button>
+                  );
+                })}
+            </div>
           </div>
         </AnimatedSection>
 
