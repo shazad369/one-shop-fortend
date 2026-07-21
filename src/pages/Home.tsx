@@ -55,13 +55,9 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1], delay },
 });
 
-// 👉 mobile category banner slideshow images — change/add links here easily
-const MOBILE_CATEGORY_BANNER_IMAGES = [
-  "/file_0000000064b8820baf2d148b43b757e0.png",
-  "/file_0000000064b8820baf2d148b43b757e0.png",
-  "/file_0000000064b8820baf2d148b43b757e0.png",
-];
-
+// 👉 mobile category banner image — change link here easily
+const MOBILE_CATEGORY_BANNER_IMAGE =
+  "https://i.postimg.cc/3JKrHN67/file-00000000dc848230ae550dae8958b8f8.png";
 
 export default function Home() {
   const { dark } = useTheme();
@@ -205,25 +201,23 @@ export default function Home() {
         <link rel="canonical" href={window.location.origin} />
       </Helmet>
 
-      {/* Mobile-only slideshow keyframes: hold each image ~3s, then slide slowly to the next */}
+      {/* Mobile-only banner animation: slides in from the right, holds ~3s, slides out left, loops */}
       <style>{`
-        @keyframes mobileCategorySlide {
-          0%   { transform: translateX(0); }
-          22%  { transform: translateX(0); }
-          33%  { transform: translateX(-100vw); }
-          55%  { transform: translateX(-100vw); }
-          66%  { transform: translateX(-200vw); }
-          88%  { transform: translateX(-200vw); }
-          100% { transform: translateX(-300vw); }
+        @keyframes mobileBannerSlide {
+          0%   { transform: translateX(100%); }
+          10%  { transform: translateX(0%); }
+          70%  { transform: translateX(0%); }
+          80%  { transform: translateX(-100%); }
+          100% { transform: translateX(-100%); }
         }
-        .mobile-category-slide-track {
-          animation: mobileCategorySlide 13.5s ease-in-out infinite;
+        .mobile-banner-slide {
+          animation: mobileBannerSlide 5s ease-in-out infinite;
         }
       `}</style>
 
       <div className="overflow-hidden">
         {/* HERO */}
-        <section className="relative min-h-[60vh] sm:min-h-screen flex items-center pt-14 sm:pt-20">
+        <section className="relative hidden sm:block min-h-[60vh] sm:min-h-screen flex items-center pt-14 sm:pt-20">
 
           <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
             <div
@@ -268,7 +262,7 @@ export default function Home() {
 
                 <motion.h1
                   {...fadeUp(0.08)}
-                  className="text-4xl sm:text-5xl lg:text-[4.25rem] font-bold leading-[1.08] tracking-tight mb-5 sm:mb-6"
+                  className="text-4xl sm:block sm:text-5xl lg:text-[4.25rem] font-bold leading-[1.08] tracking-tight mb-5 sm:mb-6"
                 >
                   {siteConfig.hero.title}{" "}
                   <span className="gradient-text font-display italic">
@@ -277,33 +271,43 @@ export default function Home() {
 
                 </motion.h1>
 
-                <motion.p
-                  {...fadeUp(0.16)}
-                  className={`text-base sm:text-lg leading-relaxed mb-5 sm:mb-9 max-w-[460px] ${mutedText}`}
-                >
-                  {siteConfig.hero.subtitle}
-                </motion.p>
+          <motion.p
+  {...fadeUp(0.16)}
+  className={`hidden sm:block text-base sm:text-lg leading-relaxed mb-5 sm:mb-9 max-w-[460px] ${mutedText}`}
+>
+  {siteConfig.hero.subtitle}
+</motion.p>
 
-                {/* Mobile-only category banner slideshow — margin added so it
-                    doesn't sit flush against the paragraph above / buttons below */}
-                <div className="sm:hidden overflow-hidden rounded-2xl mt-5 mb-7">
-                  <div className="flex w-max mobile-category-slide-track">
-                    {MOBILE_CATEGORY_BANNER_IMAGES.map((src, i) => (
-                      <img
-                        key={i}
-                        src={src}
-                        alt={i === 0 ? "Shop by Category" : ""}
-                        aria-hidden={i === 0 ? undefined : "true"}
-                        className="h-auto w-screen max-w-none object-cover flex-shrink-0"
-                      />
-                    ))}
-                    {/* duplicate of the first image so the loop snaps back seamlessly */}
+                {/* Mobile-only full-bleed category banner: full viewport width,
+                    rounded bottom corners only, image slides in from the right,
+                    holds ~3s, then exits left (loops). PC/tablet untouched. */}
+                <div className="sm:hidden w-screen ml-[calc(50%-50vw)] mb-5">
+                  <div className="relative w-full aspect-[16/9] overflow-hidden rounded-b-3xl shadow-lg shadow-black/10 bg-gray-200/40 dark:bg-white/5">
                     <img
-                      src={MOBILE_CATEGORY_BANNER_IMAGES[0]}
-                      alt=""
-                      aria-hidden="true"
-                      className="h-auto w-screen max-w-none object-cover flex-shrink-0"
+                      src={MOBILE_CATEGORY_BANNER_IMAGE}
+                      alt="Shop by Category"
+                      loading="eager"
+                      className="mobile-banner-slide absolute inset-0 h-full w-full object-cover"
                     />
+                    {/* bottom gradient for depth */}
+                    <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/30 to-transparent pointer-events-none rounded-b-3xl" />
+                  </div>
+
+                  {/* Feature row directly under the banner — mobile only, side by side */}
+                  <div className="flex items-center justify-between gap-2 px-4 pt-4">
+                    {FEATURES.map((f) => (
+                      <span
+                        key={f.label}
+                        className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full ${
+                          dark
+                            ? "bg-white/5 text-gray-300 border border-white/8"
+                            : "bg-gray-50 text-gray-600 border border-gray-200"
+                        }`}
+                      >
+                        <span className="text-violet-400">{f.icon}</span>
+                        {f.label}
+                      </span>
+                    ))}
                   </div>
                 </div>
 
@@ -334,9 +338,10 @@ export default function Home() {
                   </Link>
                 </motion.div>
 
+                {/* Desktop/tablet-only feature row (mobile has its own copy under the banner) */}
                 <motion.div
                   {...fadeUp(0.32)}
-                  className={`flex flex-wrap gap-3 mt-6 sm:mt-10 pt-6 sm:pt-10 border-t ${
+                  className={`hidden sm:flex flex-wrap gap-3 mt-6 sm:mt-10 pt-6 sm:pt-10 border-t ${
                     dark ? "border-white/8" : "border-gray-100"
                   }`}
                 >
@@ -363,7 +368,22 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Mobile-only hero section */}
+           <div className=" mt-14 rounded-b-3xl  rounded-b-3xl shadow-lg shadow-black/9 dark:bg-white/5 sm:hidden">
+            <div>
+              <img
+                src="https://i.postimg.cc/3JKrHN67/file-00000000dc848230ae550dae8958b8f8.png"
+                alt="Shop by Category"
+                loading="eager"
+                className="w-full h-auto object-cover  rounded-2xl shadow-lg shadow-black/10 dark:bg-white/5"
+              />              
+            </div>
 
+
+
+           </div>
+
+         
 
         {/* CATEGORIES */}
         <section className="py-9 sm:py-16 lg:py-20">
@@ -381,53 +401,31 @@ export default function Home() {
             </AnimatedSection>
 
             {/* Desktop/tablet: original category cards grid (unchanged) */}
-            <div className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
-              {siteConfig.categories.map((cat, i) => (
-                <AnimatedSection key={cat.name} delay={i * 0.07}>
-                  <Link to="/shop">
-                    <motion.div
-                      whileHover={{ scale: 1.04, y: -4 }}
-                      whileTap={{ scale: 0.97 }}
-                      className={`relative p-5 sm:p-6 lg:p-8 rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 ${
-                        dark
-                          ? "bg-white/[0.03] border border-white/8 hover:border-white/20 hover:bg-white/[0.06]"
-                          : "bg-white border border-gray-100 hover:shadow-xl hover:shadow-gray-200/70"
-                      }`}
-                    >
-                      <div
-                        className={`absolute inset-0 bg-gradient-to-br ${cat.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}
-                      />
-                      <div className="text-center relative z-10">
-                        <div className="mb-3 flex justify-center">
-                          <div
-                            className={`p-2.5 rounded-xl transition-all duration-300 group-hover:scale-110 ${
-                              dark
-                                ? "bg-white/5 text-white/70 group-hover:text-white group-hover:bg-white/10"
-                                : "bg-gray-50 text-gray-600 group-hover:text-gray-900 group-hover:bg-gray-100"
-                            }`}
-                          >
-                            <cat.icon size={22} />
-                          </div>
-                        </div>
-                        <h3
-                          className={`text-xs sm:text-sm font-semibold tracking-wide ${
-                            dark ? "text-gray-200" : "text-gray-800"
-                          }`}
-                        >
-                          {cat.name}
-                        </h3>
-                      </div>
-                    </motion.div>
-                  </Link>
-                </AnimatedSection>
-              ))}
-            </div>
+            
           </div>
         </section>
 
         {/* FEATURED PRODUCTS */}
 
-             <Shop></Shop>
+        <div className="grid grid-cols-3 bg-gray-850 pb-3 -translate-y-[60px] gap-1.5 px-4 pt-4 sm:hidden">
+  {FEATURES.map((f) => (
+    <span
+      key={f.label}
+      className={`inline-flex items-center justify-center gap-1 rounded-xl px-1.5 py-1.5 text-[10px] font-medium leading-tight text-center ${
+        dark
+          ? "bg-white/5 text-gray-300 border border-white/8"
+          : "bg-gray-50 text-gray-600 border border-gray-200"
+      }`}
+    >
+      <span className="text-violet-400 shrink-0">{f.icon}</span>
+      {f.label}
+    </span>
+  ))}
+</div>
+
+            <div className="bg-gray-950 rounded-t-3xl -translate-y-[40px] ">
+               <Shop ></Shop>
+            </div>
         {/* CTA BANNER */}
         <section className="py-11 sm:py-16 lg:py-24">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
