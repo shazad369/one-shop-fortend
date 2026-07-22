@@ -57,7 +57,7 @@ const fadeUp = (delay = 0) => ({
 
 // 👉 mobile category banner image — change link here easily
 const MOBILE_CATEGORY_BANNER_IMAGE =
-  "https://i.postimg.cc/3JKrHN67/file-00000000dc848230ae550dae8958b8f8.png";
+  "./thumbail2.png";
 
 export default function Home() {
   const { dark } = useTheme();
