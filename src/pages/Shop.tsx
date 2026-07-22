@@ -603,10 +603,21 @@ const CATEGORY_TILE_COLORS = [
 // ছবি না থাকলে automatically রঙিন letter-tile দেখাবে (fallback)
 // ════════════════════════════════════════════════════════════════════
 const CATEGORY_IMAGES: Record<string, string> = {
-  offer: "./delevery.jpeg",
-  // fashion: "https://your-cdn.com/categories/fashion.png",
-  // gadget: "/images/categories/gadget.png",
-  // এখানে আপনার backend থেকে আসা category-র নাম (lowercase) আর ছবির path/URL বসান
+  offer: "./offer.jpeg",
+  "customize & gift": "./gift.jpeg",
+  "gadgets & electronics": "./Gadgets & Electronics.jpeg",
+  "home & lifestyle": "./Home & Lifestyle.jpeg",
+  foods: "./food.jpeg",
+  fashion: "./fashion.jpeg",
+  gadget: "./gadget.jpeg",
+  "kids zone": "./Kids Zone.jpeg",
+  "home & living": "./home.jpeg",
+  "men's fashion": "./mens.jpeg",
+  "women's fashion": "./women.jpeg",
+  "other's": "./others.jpeg",
+  winter: "./winter.jpeg",
+  watch : "./watch.jpeg",
+
 };
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────
