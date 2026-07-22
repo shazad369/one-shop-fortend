@@ -18,6 +18,40 @@ const HEADERS = {
 };
 
 // ════════════════════════════════════════════════════════════════════
+// 🗄️ CACHE HELPERS (sessionStorage + TTL)
+// ════════════════════════════════════════════════════════════════════
+const CATEGORIES_CACHE_KEY = "cache_categories";
+const CATEGORIES_TTL_MS = 10 * 60 * 1000; // 10 min
+
+const PRODUCTS_CACHE_PREFIX = "cache_products_";
+const PRODUCTS_TTL_MS = 10 * 60 * 1000; // 10 min
+
+type CacheEntry<T> = { data: T; ts: number };
+
+function readCache<T>(key: string, ttl: number): T | null {
+  try {
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return null;
+    const parsed: CacheEntry<T> = JSON.parse(raw);
+    if (Date.now() - parsed.ts > ttl) return null;
+    return parsed.data;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache<T>(key: string, data: T) {
+  try {
+    const entry: CacheEntry<T> = { data, ts: Date.now() };
+    sessionStorage.setItem(key, JSON.stringify(entry));
+  } catch {}
+}
+
+function productsCacheKey(activeSearch: string, category: string, sortBy: string) {
+  return `${PRODUCTS_CACHE_PREFIX}${activeSearch}__${category}__${sortBy}`;
+}
+
+// ════════════════════════════════════════════════════════════════════
 // 🔤 BENGALI TO ENGLISH TRANSLITERATION (বাংলা থেকে ইংরেজি)
 // ════════════════════════════════════════════════════════════════════
 const BENGALI_TO_ENGLISH: Record<string, string> = {
@@ -603,21 +637,24 @@ const CATEGORY_TILE_COLORS = [
 // ছবি না থাকলে automatically রঙিন letter-tile দেখাবে (fallback)
 // ════════════════════════════════════════════════════════════════════
 const CATEGORY_IMAGES: Record<string, string> = {
-  offer: "./offer.jpeg",
-  "customize & gift": "./gift.jpeg",
-  "gadgets & electronics": "./Gadgets & Electronics.jpeg",
-  "home & lifestyle": "./Home & Lifestyle.jpeg",
-  foods: "./food.jpeg",
-  fashion: "./fashion.jpeg",
-  gadget: "./gadget.jpeg",
-  "kids zone": "./Kids Zone.jpeg",
-  "home & living": "./home.jpeg",
-  "men's fashion": "./mens.jpeg",
-  "women's fashion": "./women.jpeg",
-  "other's": "./others.jpeg",
-  winter: "./winter.jpeg",
-  watch : "./watch.jpeg",
+  offer: "/offer.jpeg",
+  "customize & gift": "/gift.jpeg",
+  "gadgets & electronics": "/Gadgets & Electronics.jpeg",
+  "home & lifestyle": "/Home & Lifestyle.jpeg",
+  foods: "/food.jpeg",
+  fashion: "/fashion.jpeg",
+  gadget: "/gadget.jpeg",
+  "kids zone": "/Kids Zone.jpeg",
+  "home & living": "/home.jpeg",
+  "men's fashion": "/mens.jpeg",
+  "women's fashion": "/women.jpeg",
+  "other's": "/others.jpeg",
+  winter: "/winter.jpeg",
+  watch: "/watch.jpeg",
 
+  // এখানে আপনার backend থেকে আসা category-র নাম (lowercase) আর ছবির path/URL বসান
+  // fashion: "https://your-cdn.com/categories/fashion.png",
+  // gadget: "/images/categories/gadget.png",
 };
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────
@@ -638,7 +675,22 @@ export default function Shop() {
 
   const [category, setCategory] = useState("all");
   const [sortBy] = useState("default");
-  const [categories, setCategories] = useState<string[]>(["all"]);
+
+  // ─── categories: try cache first so first paint isn't empty ──────
+  const [categories, setCategories] = useState<string[]>(() => {
+    const cached = readCache<string[]>(CATEGORIES_CACHE_KEY, CATEGORIES_TTL_MS);
+    return cached && cached.length > 0 ? cached : ["all"];
+  });
+  const [categoriesLoading, setCategoriesLoading] = useState(() => {
+    const cached = readCache<string[]>(CATEGORIES_CACHE_KEY, CATEGORIES_TTL_MS);
+    return !(cached && cached.length > 0);
+  });
+
+  // ─── per-tile image load tracking (for skeleton → fade-in) ───────
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+  const handleImageLoad = (label: string) => {
+    setLoadedImages((prev) => new Set(prev).add(label));
+  };
 
   // Dropdown state
   const [showDropdown, setShowDropdown] = useState(false);
@@ -663,17 +715,32 @@ export default function Shop() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ─── FETCH CATEGORIES ─────────────────────────────────────────────
+  // ─── FETCH CATEGORIES (cache-first + background refresh) ─────────
   useEffect(() => {
+    const cached = readCache<string[]>(CATEGORIES_CACHE_KEY, CATEGORIES_TTL_MS);
+    if (cached && cached.length > 0) {
+      setCategories(cached);
+      setCategoriesLoading(false);
+      // cache আছে — তাও background এ fresh data আনি, UI blocking ছাড়া
+    } else {
+      setCategoriesLoading(true);
+    }
+
     const fetchCategories = async () => {
       try {
         const res = await fetch(`${API_BASE}/shopdata/categories`, { headers: HEADERS });
         if (res.ok) {
           const data = await res.json();
-          if (data?.categories) setCategories(["all", ...data.categories]);
+          if (data?.categories) {
+            const next = ["all", ...data.categories];
+            setCategories(next);
+            writeCache(CATEGORIES_CACHE_KEY, next);
+          }
         }
       } catch (err) {
         console.error("Categories fetch failed:", err);
+      } finally {
+        setCategoriesLoading(false);
       }
     };
     fetchCategories();
@@ -817,14 +884,33 @@ export default function Shop() {
     return [...historyMatches, ...dictMatches];
   }
 
-  // ─── FETCH PRODUCTS ───────────────────────────────────────────────
+  // ─── FETCH PRODUCTS (cache-first + background refresh) ───────────
   const fetchProducts = useCallback(
     async (pageNum: number, reset = false) => {
       if (isFetching.current) return;
       isFetching.current = true;
 
-      if (reset) setLoading(true);
-      else setLoadingMore(true);
+      const cacheKey = productsCacheKey(activeSearch, category, sortBy);
+
+      // শুধু প্রথম পেজের জন্যই cache ব্যবহার হবে
+      if (reset) {
+        const cached = readCache<{ products: Product[]; total: number; hasMore: boolean }>(
+          cacheKey,
+          PRODUCTS_TTL_MS
+        );
+        if (cached) {
+          setProducts(cached.products);
+          setTotal(cached.total);
+          setHasMore(cached.hasMore);
+          setPage(1);
+          setLoading(false);
+          // cache দেখালাম, তবু background এ fresh data আনবো নিচে
+        } else {
+          setLoading(true);
+        }
+      } else {
+        setLoadingMore(true);
+      }
 
       try {
         let url: string;
@@ -862,8 +948,12 @@ export default function Shop() {
         const totalCount = data?.total || 0;
         const more = data?.hasMore || false;
 
-        if (reset) setProducts(productList);
-        else setProducts((prev) => [...prev, ...productList]);
+        if (reset) {
+          setProducts(productList);
+          writeCache(cacheKey, { products: productList, total: totalCount, hasMore: more });
+        } else {
+          setProducts((prev) => [...prev, ...productList]);
+        }
 
         setHasMore(more);
         setTotal(totalCount);
@@ -872,7 +962,7 @@ export default function Shop() {
         console.error("Fetch failed:", err);
         toast.error("প্রোডাক্ট লোড করতে সমস্যা হয়েছে");
         if (reset) {
-          setProducts([]);
+          setProducts((prev) => (prev.length > 0 ? prev : []));
           setHasMore(false);
         }
       } finally {
@@ -926,56 +1016,86 @@ export default function Shop() {
       </Helmet>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+
         <AnimatedSection>
           <div className="mb-6 sm:mb-8 -mx-3 sm:mx-0 px-3 sm:px-0">
             <div
               className="grid grid-rows-2 grid-flow-col auto-cols-[74px] gap-x-3 gap-y-3.5 overflow-x-auto pb-1 snap-x snap-mandatory sm:grid-rows-none sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-6 lg:grid-cols-8 sm:gap-x-5 sm:gap-y-6 sm:overflow-visible sm:pb-0 sm:snap-none sm:justify-items-center"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
-              {categories
-                .filter((cat) => cat && cat !== "all")
-                .map((cat, i) => {
-                  const label = String(cat);
-                  const imageSrc = CATEGORY_IMAGES[label.toLowerCase()];
-
-                  return (
-                    <button
-                      key={label}
-                      type="button"
-                      onClick={() => setCategory(label)}
-                      className="flex flex-col items-center gap-1.5 snap-start"
-                    >
+              {categoriesLoading
+                ? // ─── CATEGORY ROW SKELETON ───────────────────────
+                  Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="flex flex-col items-center gap-1.5">
                       <div
-                        className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-white text-base sm:text-lg font-bold shadow-sm transition-transform active:scale-95 overflow-hidden ${
-                          category === label ? "ring-2 ring-violet-500 ring-offset-2" : ""
-                        } ${dark ? "ring-offset-black" : "ring-offset-white"}`}
-                        style={
-                          !imageSrc
-                            ? { background: CATEGORY_TILE_COLORS[i % CATEGORY_TILE_COLORS.length] }
-                            : undefined
-                        }
-                      >
-                        {imageSrc ? (
-                          <img
-                            src={imageSrc}
-                            alt={label}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          label.charAt(0).toUpperCase()
-                        )}
-                      </div>
-                      <span
-                        className={`text-[10px] sm:text-xs text-center leading-tight capitalize line-clamp-2 max-w-[70px] sm:max-w-[86px] ${
-                          dark ? "text-gray-300" : "text-gray-700"
+                        className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl animate-pulse ${
+                          dark ? "bg-white/[0.06]" : "bg-gray-200"
                         }`}
-                      >
-                        {label}
-                      </span>
-                    </button>
-                  );
-                })}
+                      />
+                      <div
+                        className={`h-2.5 w-10 rounded-full animate-pulse ${
+                          dark ? "bg-white/[0.06]" : "bg-gray-200"
+                        }`}
+                      />
+                    </div>
+                  ))
+                : categories
+                    .filter((cat) => cat && cat !== "all")
+                    .map((cat, i) => {
+                      const label = String(cat);
+                      const imageSrc = CATEGORY_IMAGES[label.toLowerCase()];
+                      const isImageLoaded = loadedImages.has(label);
+
+                      return (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={() => setCategory(label)}
+                          className="flex flex-col items-center gap-1.5 snap-start"
+                        >
+                          <div
+                            className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-white text-base sm:text-lg font-bold shadow-sm transition-transform active:scale-95 overflow-hidden relative ${
+                              category === label ? "ring-2 ring-violet-500 ring-offset-2" : ""
+                            } ${dark ? "ring-offset-black" : "ring-offset-white"}`}
+                            style={
+                              !imageSrc
+                                ? { background: CATEGORY_TILE_COLORS[i % CATEGORY_TILE_COLORS.length] }
+                                : undefined
+                            }
+                          >
+                            {imageSrc ? (
+                              <>
+                                {!isImageLoaded && (
+                                  <div
+                                    className={`absolute inset-0 animate-pulse ${
+                                      dark ? "bg-gray-800" : "bg-gray-200"
+                                    }`}
+                                  />
+                                )}
+                                <img
+                                  src={imageSrc}
+                                  alt={label}
+                                  className={`w-full h-full object-cover transition-opacity duration-300 ${
+                                    isImageLoaded ? "opacity-100" : "opacity-0"
+                                  }`}
+                                  loading="lazy"
+                                  onLoad={() => handleImageLoad(label)}
+                                />
+                              </>
+                            ) : (
+                              label.charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <span
+                            className={`text-[10px] sm:text-xs text-center leading-tight capitalize line-clamp-2 max-w-[70px] sm:max-w-[86px] ${
+                              dark ? "text-gray-300" : "text-gray-700"
+                            }`}
+                          >
+                            {label}
+                          </span>
+                        </button>
+                      );
+                    })}
             </div>
           </div>
         </AnimatedSection>
@@ -1143,21 +1263,32 @@ export default function Shop() {
 
             {/* Category buttons */}
             <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-3 sm:mt-4">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setCategory(cat)}
-                  className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-medium capitalize transition-all duration-300 ${
-                    category === cat
-                      ? "bg-gradient-to-r from-violet-600 to-cyan-500 text-white shadow-lg shadow-violet-500/20"
-                      : dark
-                      ? "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  {cat === "all" ? "All Products" : cat}
-                </button>
-              ))}
+              {categoriesLoading
+                ? // ─── CATEGORY PILLS SKELETON ─────────────────────
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`h-7 sm:h-8 rounded-xl animate-pulse ${
+                        dark ? "bg-white/5" : "bg-gray-100"
+                      }`}
+                      style={{ width: 60 + (i % 3) * 20 }}
+                    />
+                  ))
+                : categories.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setCategory(cat)}
+                      className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-medium capitalize transition-all duration-300 ${
+                        category === cat
+                          ? "bg-gradient-to-r from-violet-600 to-cyan-500 text-white shadow-lg shadow-violet-500/20"
+                          : dark
+                          ? "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      {cat === "all" ? "All Products" : cat}
+                    </button>
+                  ))}
             </div>
           </div>
         </AnimatedSection>
