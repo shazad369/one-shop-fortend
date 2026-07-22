@@ -372,7 +372,7 @@ export default function Home() {
            <div className=" mt-14 rounded-b-3xl  rounded-b-3xl shadow-lg shadow-black/9 dark:bg-white/5 sm:hidden">
             <div>
               <img
-                src="https://i.postimg.cc/3JKrHN67/file-00000000dc848230ae550dae8958b8f8.png"
+                src="./thumbail2.png"
                 alt="Shop by Category"
                 loading="eager"
                 className="w-full h-auto object-cover  rounded-2xl shadow-lg shadow-black/10 dark:bg-white/5"
