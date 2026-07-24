@@ -1,6 +1,7 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState, useCallback, useRef, useMemo, memo, useReducer } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Seo from "../components/Seo";
 import {
   ArrowLeft, Star, ShoppingCart, Shield, Truck, RotateCcw,
   PenLine, Package, ImagePlus, X, Tag,
