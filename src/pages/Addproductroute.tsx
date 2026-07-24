@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import Seo from "../components/Seo";
 
 const LIMIT = 4;
 const CACHE_TTL = 5 * 60 * 1000;
@@ -70,6 +71,7 @@ function SkeletonOrder() {
       background: "linear-gradient(135deg, #1e1b4b44, #0f0f2344)",
       animation: "pulse 1.5s ease-in-out infinite",
     }}>
+      <Seo path="/Addproductroute" />
       <div style={{ height: 24, background: "#6d28d933", borderRadius: 8, marginBottom: 14 }} />
       <div style={{ display: "flex", gap: 14, marginBottom: 14 }}>
         <div style={{ width: 72, height: 72, background: "#6d28d933", borderRadius: 10, flexShrink: 0 }} />
