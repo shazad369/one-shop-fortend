@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../Contex/AuthContext';
 import { toast } from 'react-toastify';
+import Seo from "../components/Seo";
 
 type ForgotStep = 'idle' | 'email' | 'otp' | 'newpass';
 
@@ -314,6 +315,7 @@ const ReLogin = () => {
   const renderForgotPanel = () => (
     <div className={`p-6 sm:p-8 rounded-2xl pt-[10px] shadow-lg w-full max-w-md transition-colors duration-300 ${dark ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
       {/* Header */}
+      <Seo path="/Relogin" />
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold">
