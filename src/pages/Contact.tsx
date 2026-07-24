@@ -6,6 +6,7 @@ import { useTheme } from "../App";
 import AnimatedSection from "../components/AnimatedSection";
 import { FaFacebookSquare, FaInstagram, FaWhatsapp } from "react-icons/fa";
 import emailjs from "@emailjs/browser";
+import Seo from "../components/Seo";
 
 export default function Contact() {
   const { dark } = useTheme();
@@ -61,6 +62,7 @@ export default function Contact() {
 
   return (
     <div className="pt-24 pb-20 min-h-screen">
+      <Seo path="/Contact" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <AnimatedSection>
