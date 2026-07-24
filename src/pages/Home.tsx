@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import Seo from "../components/Seo";
 import {
   ArrowRight,
   Sparkles,
@@ -57,7 +58,7 @@ const fadeUp = (delay = 0) => ({
 
 // 👉 mobile category banner image — change link here easily
 const MOBILE_CATEGORY_BANNER_IMAGE =
-  "./thumbail2.png";
+  "./thumbail2.png"; // Replace with your desired image URL
 
 export default function Home() {
   const { dark } = useTheme();
@@ -216,6 +217,7 @@ export default function Home() {
       `}</style>
 
       <div className="overflow-hidden">
+        <Seo path="/Home" />
         {/* HERO */}
         <section className="relative hidden sm:block min-h-[60vh] sm:min-h-screen flex items-center pt-14 sm:pt-20">
 
