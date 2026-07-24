@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../Contex/AuthContext';
 import { toast } from 'react-toastify';
+import Seo from "../components/Seo";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -131,7 +132,7 @@ const Login = () => {
   return (
     // মোবাইলে ওপর থেকে ১০ পিক্সেল অতিরিক্ত স্পেস দেওয়ার জন্য pt-[70px] সেট করা হয়েছে, এবং ডেক্সটপে sm:pt-12 দিয়ে ব্যালেন্স করা হয়েছে
     <div className={`min-h-screen w-full pt-[50px]  sm:pt-12 p-4 sm:p-8 lg:p-12 flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16 transition-colors duration-300 ${dark ? 'bg-gray-950' : 'bg-gray-50'}`}>
-      
+      <Seo path="/Login" />
       {/* স্লাইডার পার্ট: মোবাইলে ফুল-উইডথ, বড় স্ক্রিনে max-w-2xl */}
       <div className="relative w-full max-w-md lg:max-w-2xl overflow-hidden rounded-2xl shadow-md">
         {/* স্লাইডার উইন্ডো */}
