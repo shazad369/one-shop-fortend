@@ -1,6 +1,7 @@
 import { useAuth } from "@/Contex/AuthContext";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Seo from "../components/Seo";
 
 // ── cache helpers ─────────────────────────────────────────────
 const CACHE_TTL = 5 * 60 * 1000;
@@ -367,6 +368,7 @@ export default function DeliveryForm({ onSubmit }: { onSubmit?: (data: FormData)
       border: "1px solid #1e293b",
       boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)"
     }}>
+      <Seo path="/Location" />
       <header style={{ textAlign: "center", marginBottom: "2.5rem" }}>
         <h2 style={{ fontSize: 26, fontWeight: 700, color: "#f8fafc", marginBottom: 8 }}>
           📦 Delivery Information
