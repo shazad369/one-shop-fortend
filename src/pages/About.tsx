@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import Seo from "../components/Seo";
 import { siteConfig } from "../data/config";
 import { useTheme } from "../App";
 import AnimatedSection from "../components/AnimatedSection";
@@ -12,6 +13,7 @@ export default function About() {
 
   return (
     <div className="pt-24 pb-20 min-h-screen">
+      <Seo path="/About" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hero */}
         <AnimatedSection>
