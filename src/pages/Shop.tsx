@@ -6,7 +6,7 @@ import AnimatedSection from "../components/AnimatedSection";
 import ProductCard, { Product } from "../components/ProductCard";
 import { Helmet } from "react-helmet-async";
 import { toast } from "react-toastify";
-
+import Seo from "../components/Seo";
 const PAGE_SIZE = 20;
 const API_KEY = import.meta.env.VITE_API_KEY;
 const API_BASE = import.meta.env.VITE_API;
@@ -1011,6 +1011,7 @@ export default function Shop() {
   // ─── RENDER ────────────────────────────────────────────────────────
   return (
     <div className="pt-2 sm:pt-2 pb-12 translate-y-[60px] sm:pb-20 min-h-screen">
+      <Seo path="/shop" />
       <Helmet>
         <title>ONE-SHOP — Premium E-Commerce</title>
       </Helmet>
