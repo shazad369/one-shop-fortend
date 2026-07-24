@@ -70,7 +70,7 @@ function AppContent() {
               <Route path="/relogin" element={<Relogin />} />
 
               {/* Protected */}
-             <Route path="product/:id/" element={<ProductDetail />} />
+              <Route path="product/:id/" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
               <Route path="/about" element={<ProtectedRoute><About /></ProtectedRoute>} />
               <Route path="/contact" element={<ProtectedRoute><Contact /></ProtectedRoute>} />
               <Route path="/location" element={<ProtectedRoute><Location /></ProtectedRoute>} />
@@ -97,11 +97,15 @@ function AppContent() {
   );
 }
 
+import { HelmetProvider } from "react-helmet-async";
+
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <HelmetProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </HelmetProvider>
   );
 }
 
