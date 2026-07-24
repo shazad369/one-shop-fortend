@@ -1,6 +1,7 @@
 import { useAuth } from '@/Contex/AuthContext';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import Seo from "../components/Seo";
 
 const API     = import.meta.env.VITE_API;
 const API_KEY = import.meta.env.VITE_API_KEY;
@@ -232,6 +233,7 @@ const Cart = () => {
 
   if (!email) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
+      <Seo path="/Cart" />
       <div className="text-center bg-gray-900 p-8 rounded-xl border border-gray-800 w-full max-w-md">
         <p className="text-gray-300 text-lg font-semibold mb-4">Please login to view your cart</p>
         <Link to="/login" className="inline-block bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-200">
