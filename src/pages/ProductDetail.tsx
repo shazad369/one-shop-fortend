@@ -20,6 +20,7 @@ interface Review {
   email: string;
   comment: string;
   imageUrl?: string;
+  rating?: number | null;
 }
 
 interface RelatedPayload {
@@ -299,6 +300,14 @@ const parseFeatures = (raw: string): string[] => {
 const fmtDesc = (text: string): string[] =>
   text ? text.split(/\n|&nbsp;|<br\s*\/?>/i).map(l => l.trim()).filter(Boolean) : [];
 
+// rating সহ review গুলো থেকে average বের করে — rating না দেওয়া review গুলো বাদ যায়
+function computeReviewStats(list: Review[]): { avg: number; count: number } | null {
+  const rated = list.filter(r => typeof r.rating === "number" && (r.rating as number) > 0);
+  if (!rated.length) return null;
+  const total = rated.reduce((sum, r) => sum + (r.rating || 0), 0);
+  return { avg: Math.round((total / rated.length) * 10) / 10, count: rated.length };
+}
+
 async function fetchJSON<T>(url: string, signal?: AbortSignal, options?: RequestInit): Promise<T> {
   const res = await fetch(url, { 
     signal, 
@@ -349,6 +358,42 @@ const Modal = memo(function Modal({ onClose, children, maxW = "max-w-md", dark }
   );
 });
 
+// ─── StarRating (display) ──────────────────────────────────────
+const StarRatingDisplay = memo(function StarRatingDisplay({ rating }: { rating: number }) {
+  return (
+    <div className="flex items-center gap-0.5" aria-label={`${rating} out of 5 stars`}>
+      {[1, 2, 3, 4, 5].map(n => (
+        <Star key={n} size={13} className={n <= rating ? "text-amber-400 fill-amber-400" : "text-gray-600"} />
+      ))}
+    </div>
+  );
+});
+
+// ─── StarRating (input) ──────────────────────────────────────────
+const StarRatingInput = memo(function StarRatingInput({ value, onChange, dark }: { value: number; onChange: (v: number) => void; dark: boolean }) {
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map(n => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n === value ? 0 : n)}
+          onMouseEnter={() => setHover(n)}
+          onMouseLeave={() => setHover(0)}
+          className="p-0.5 cursor-pointer"
+          aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
+        >
+          <Star
+            size={26}
+            className={(hover || value) >= n ? "text-amber-400 fill-amber-400" : dark ? "text-gray-600" : "text-gray-300"}
+          />
+        </button>
+      ))}
+    </div>
+  );
+});
+
 // ─── ReviewCard ──────────────────────────────────────────────────
 const ReviewCard = memo(function ReviewCard({ review, dark, onLightbox }: { review: Review; dark: boolean; onLightbox: (url: string) => void }) {
   return (
@@ -357,6 +402,7 @@ const ReviewCard = memo(function ReviewCard({ review, dark, onLightbox }: { revi
         <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 font-bold text-sm">{review.email?.charAt(0).toUpperCase()}</div>
         <p className="text-violet-500 font-semibold text-sm">{review.email}</p>
       </div>
+      {!!review.rating && <div className="mb-2"><StarRatingDisplay rating={review.rating} /></div>}
       <p className={`text-sm leading-relaxed ${dark ? "text-gray-400" : "text-gray-600"}`}>{review.comment}</p>
       {review.imageUrl && (
         <img src={review.imageUrl} alt="Review" onClick={() => onLightbox(review.imageUrl!)}
@@ -375,6 +421,7 @@ const ReviewSection = memo(function ReviewSection({ firstReview, dark, productId
   const [showAll,    setShowAll]    = useState(false);
   const [showAdd,    setShowAdd]    = useState(false);
   const [comment,    setComment]    = useState("");
+  const [rating,     setRating]     = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [selImg,     setSelImg]     = useState<File|null>(null);
   const [preview,    setPreview]    = useState<string|null>(null);
@@ -437,7 +484,7 @@ const ReviewSection = memo(function ReviewSection({ firstReview, dark, productId
     setSubmitting(true);
     let imageUrl: string | undefined;
     if (selImg) { const u = await uploadImg(selImg); if (!u) { setSubmitting(false); return; } imageUrl = u; }
-    const rev: Review = { productId, email: userEmail, comment: comment.trim(), imageUrl };
+    const rev: Review = { productId, email: userEmail, comment: comment.trim(), imageUrl, rating: rating || null };
     try {
       const res = await fetch(`${API}/reviews`, { method: "POST", headers: { "x-api-key": API_KEY,       'ngrok-skip-browser-warning': 'true' ,
  "Content-Type": "application/json" }, body: JSON.stringify(rev) });
@@ -447,7 +494,7 @@ const ReviewSection = memo(function ReviewSection({ firstReview, dark, productId
       const ck = `reviews_${productId}`;
       memCache.reviews.set(ck, [rev, ...(memCache.reviews.get(ck) ?? [])]);
       setAllReviews(prev => [rev, ...prev]); setTotalReviews(prev => prev + 1);
-      setComment(""); setSelImg(null); setPreview(null); setShowAdd(false);
+      setComment(""); setRating(0); setSelImg(null); setPreview(null); setShowAdd(false);
     } catch { toast.error("Failed to add review."); } finally { setSubmitting(false); }
   };
 
@@ -498,6 +545,10 @@ const ReviewSection = memo(function ReviewSection({ firstReview, dark, productId
               <div>
                 <label className={`block text-xs font-semibold mb-1 ${dark ? "text-gray-400" : "text-gray-500"}`}>Your Email</label>
                 <div className={`px-3 py-2.5 rounded-xl text-sm border ${dark ? "bg-white/5 border-white/10 text-gray-400" : "bg-gray-50 border-gray-200 text-gray-500"}`}>{userEmail || "Please login first"}</div>
+              </div>
+              <div>
+                <label className={`block text-xs font-semibold mb-2 ${dark ? "text-gray-400" : "text-gray-500"}`}>Your Rating (optional)</label>
+                <StarRatingInput value={rating} onChange={setRating} dark={dark} />
               </div>
               <div>
                 <label className={`block text-xs font-semibold mb-1 ${dark ? "text-gray-400" : "text-gray-500"}`}>Your Review</label>
@@ -731,6 +782,7 @@ export default function ProductDetail() {
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [accepted,    setAccepted]    = useState(false);
+  const [reviewStats, setReviewStats] = useState<{ avg: number; count: number } | null>(null);
 
   useEffect(() => { injectStylesOnce(); }, []);
   const productRef = useRef<Product|null>(null);
@@ -751,6 +803,7 @@ export default function ProductDetail() {
   useEffect(() => {
     const ac = new AbortController();
     dispatch({ type: "RESET" });
+    setReviewStats(null);
     lastPageRef.current = 1;
     catLoadingRef.current = false;
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -779,13 +832,18 @@ export default function ProductDetail() {
         const pid = String(product.id);
         const revKey = `reviews_${pid}`;
         if (memCache.reviews.has(revKey)) {
-          dispatch({ type: "FIRST_REVIEW", review: memCache.reviews.get(revKey)![0] ?? null });
+          const list = memCache.reviews.get(revKey)!;
+          dispatch({ type: "FIRST_REVIEW", review: list[0] ?? null });
+          setReviewStats(computeReviewStats(list));
         } else {
           fetchJSON<any>(`${API}/reviewdata/${pid}`, ac.signal, { headers })
             .then(data => {
               const list: Review[] = Array.isArray(data) ? data : data?.data || [];
               memCache.reviews.set(revKey, list);
-              if (!ac.signal.aborted) dispatch({ type: "FIRST_REVIEW", review: list[0] ?? null });
+              if (!ac.signal.aborted) {
+                dispatch({ type: "FIRST_REVIEW", review: list[0] ?? null });
+                setReviewStats(computeReviewStats(list));
+              }
             }).catch(() => {});
         }
       } catch (err: any) {
@@ -902,7 +960,12 @@ export default function ProductDetail() {
     setTimeout(() => setShowConfirm(false), 1200);
   }, [handleBuyNow]);
 
-  const handleReviewAdded  = useCallback((r: Review) => dispatch({ type: "FIRST_REVIEW", review: r }), []);
+  const handleReviewAdded  = useCallback((r: Review) => {
+    dispatch({ type: "FIRST_REVIEW", review: r });
+    const revKey = `reviews_${String(r.productId)}`;
+    const list = memCache.reviews.get(revKey) ?? [r];
+    setReviewStats(computeReviewStats(list));
+  }, []);
   const decQty             = useCallback(() => dispatch({ type: "SET_QTY", qty: Math.max(1, qty - 1) }), [qty]);
   const incQty             = useCallback(() => dispatch({ type: "SET_QTY", qty: qty + 1 }), [qty]);
   const handleCardNavigate = useCallback((p: string | number) => navigate(`/product/${p}`), [navigate]);
@@ -958,6 +1021,14 @@ export default function ProductDetail() {
             <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider mb-3 sm:mb-4 ${dark ? "bg-violet-500/20 text-violet-300 border border-violet-500/30" : "bg-violet-100 text-violet-700"}`}>{product.category || "General"}</span>
             <h1 className={`text-xl sm:text-2xl lg:text-3xl font-bold mb-3 ${dark ? "text-white" : "text-gray-900"}`}>{title}</h1>
             {product.product_code && <p className={`text-xs mb-3 ${dark ? "text-gray-500" : "text-gray-400"}`}>Product Code: {product.product_code}</p>}
+
+            {reviewStats && (
+              <div className="flex items-center gap-2 mb-3">
+                <StarRatingDisplay rating={Math.round(reviewStats.avg)} />
+                <span className={`text-sm font-bold ${dark ? "text-white" : "text-gray-900"}`}>{reviewStats.avg}</span>
+                <span className={`text-xs ${dark ? "text-gray-500" : "text-gray-400"}`}>({reviewStats.count} {reviewStats.count === 1 ? "rating" : "ratings"})</span>
+              </div>
+            )}
 
             <div className="mb-4">
               <div className="flex items-center gap-3 flex-wrap">
