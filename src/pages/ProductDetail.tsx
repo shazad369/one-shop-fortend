@@ -931,6 +931,10 @@ export default function ProductDetail() {
       .catch(() => toast.error("Failed to add product to cart."));
   }, [user, size, qty, headers]);
 
+  // 🔧 FIX: আগে এখানে /orders এর পর আবার /cartdata তে POST করা হতো —
+  // যার ফলে একই order টা ভুলবশত ইউজারের cart এ "add" হয়ে যেত (ভুল, delivery-charge
+  // যোগ করা price সহ), আর "Cart-এ যোগ হয়েছে" ইমেইলও পাঠাত (Order Confirmed ইমেইলের
+  // পাশাপাশি, একদম উল্টো মেসেজ দিয়ে)। এখন শুধু /orders কল হয় — এটাই সঠিক আচরণ।
   const handleBuyNow = useCallback(async () => {
     const p = productRef.current;
     if (!user || !p) return;
@@ -948,11 +952,10 @@ export default function ProductDetail() {
     try {
       const res = await fetch(`${API}/orders`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" ,      'ngrok-skip-browser-warning': 'true' }, body: JSON.stringify(orderData) });
       if (!res.ok) { toast.error("Failed to place order."); return; }
-    } catch { toast.error("Failed to place order."); return; }
-    try {
-      await fetch(`${API}/cartdata`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" ,      'ngrok-skip-browser-warning': 'true'  }, body: JSON.stringify(orderData) });
       toast.success("✅ Order সফলভাবে হয়েছে!", { autoClose: 3000 });
-    } catch { toast.error("Order দেওয়া যায়নি।"); }
+    } catch {
+      toast.error("Order দেওয়া যায়নি।");
+    }
   }, [user, qty, size, locationData, headers]);
 
   const handleTruckConfirm = useCallback(async () => {
