@@ -784,6 +784,28 @@ export default function ProductDetail() {
   const [accepted,    setAccepted]    = useState(false);
   const [reviewStats, setReviewStats] = useState<{ avg: number; count: number } | null>(null);
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🔧 FIX: SKELETON FLASH BUG
+  // আগে RESET শুধু useEffect এর ভিতরে dispatch হতো, যেটা render হওয়ার
+  // *পরে* চলে। ফলে product id বদলালে এক ফ্রেমের জন্য পুরনো product
+  // দেখা যেত, তারপর হঠাৎ Skeleton/blank, তারপর নতুন product — এই flash
+  // টাই bug ছিল।
+  //
+  // এখন render-এর *সময়ই* (কোনো paint হওয়ার আগেই) id বদলেছে কিনা check
+  // করে state reset করে দিচ্ছি। এটা React-এর official recommended
+  // pattern ("Adjusting state when a prop changes") — useEffect এর
+  // চেয়ে দ্রুত, তাই পুরনো content এক মুহূর্তের জন্যও দেখা যাবে না,
+  // সরাসরি loading:true (Skeleton) অবস্থাতেই চলে যাবে।
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const [trackedId, setTrackedId] = useState(id);
+  if (id !== trackedId) {
+    setTrackedId(id);
+    dispatch({ type: "RESET" });
+    setReviewStats(null);
+    setShowConfirm(false);
+    setAccepted(false);
+  }
+
   useEffect(() => { injectStylesOnce(); }, []);
   const productRef = useRef<Product|null>(null);
   productRef.current = product;
@@ -798,12 +820,11 @@ export default function ProductDetail() {
     `${API}/product/${id}/related?sameCatPage=${page}&sameCatLimit=${SAME_CAT_LIMIT}`, [id]);
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // INITIAL LOAD
+  // INITIAL LOAD (id বদলালেই আবার চলবে; RESET উপরে render-time এ
+  // ইতিমধ্যে হয়ে গেছে, তাই এখানে শুধু data fetch করলেই হবে)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   useEffect(() => {
     const ac = new AbortController();
-    dispatch({ type: "RESET" });
-    setReviewStats(null);
     lastPageRef.current = 1;
     catLoadingRef.current = false;
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -1004,8 +1025,23 @@ export default function ProductDetail() {
           "@context": "https://schema.org", "@type": "Product",
           name: title, image, description: description.slice(0, 200),
           brand: { "@type": "Brand", name: "ONE-SHOP" },
+          ...(product.product_code ? { sku: product.product_code } : {}),
           offers: { "@type": "Offer", priceCurrency: "BDT", price: activePrice,
             availability: "https://schema.org/InStock", seller: { "@type": "Organization", name: "ONE-SHOP" } },
+          // 🔧 FIX: aggregateRating আগে schema তে ছিলই না, তাই Google
+          // rating/review কখনোই দেখাতে পারত না। reviewStats না থাকলে
+          // (অর্থাৎ কোনো rated review নাই) এই field পুরোপুরি বাদ যাবে —
+          // Google fake/empty rating এর জন্য penalize করতে পারে, তাই
+          // শুধু আসল review থাকলেই এটা যোগ হবে।
+          ...(reviewStats ? {
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: reviewStats.avg,
+              reviewCount: reviewStats.count,
+              bestRating: 5,
+              worstRating: 1,
+            },
+          } : {}),
         })}</script>
       </Helmet>
 
