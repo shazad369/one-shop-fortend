@@ -138,7 +138,7 @@ ${allUrls
     headers: {
       "Content-Type": "application/xml",
       // ✅ 7 din cache - cron worker proti 7 din e nijei force-refresh kore
-      "Cache-Control": "public, max-age=604800, s-maxage=604800",
+      "Cache-Control": "public, max-age=60, s-maxage=60",
     },
   });
 
