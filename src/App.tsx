@@ -68,9 +68,9 @@ function AppContent() {
               <Route path="/shop" element={<Shop />} />
               <Route path="/login" element={<Login />} />
               <Route path="/relogin" element={<Relogin />} />
+              <Route path="product/:id/" element={<ProductDetail />} />
 
               {/* Protected */}
-              <Route path="product/:id/" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
               <Route path="/about" element={<ProtectedRoute><About /></ProtectedRoute>} />
               <Route path="/contact" element={<ProtectedRoute><Contact /></ProtectedRoute>} />
               <Route path="/location" element={<ProtectedRoute><Location /></ProtectedRoute>} />
