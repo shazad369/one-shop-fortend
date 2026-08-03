@@ -1,6 +1,6 @@
 export async function onRequest(context) {
   const { request } = context;
-  const BACKEND_URL = "https://debian.tail72a7a3.ts.net";
+  const BACKEND_URL = "https://one-shop-backend-2.onrender.com";
   const API_KEY = "one-shop-secret-key-change-this";
   const SITE_URL = "https://oneshop.pre.bd";
 
