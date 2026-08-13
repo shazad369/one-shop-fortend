@@ -191,7 +191,7 @@ export default function Home() {
         <title>ONE-SHOP — Premium E-Commerce | Best Products in Bangladesh</title>
         <meta
           name="description"
-          content="ONE-SHOP এ কিনুন ১০০০+ প্রিমিয়াম প্রোডাক্ট। Free Shipping, Cash on Delivery, Secure Payment। সেরা দামে অনলাইন শপিং করুন বাংলাদেশে।"
+          content="ONE-SHOP-এ পাবেন প্রিমিয়াম প্রোডাক্ট, Free Shipping ও Cash on Delivery সুবিধায়। সেরা দামে অনলাইন শপিং করুন বাংলাদেশে।"
         />
         <meta
           name="keywords"
@@ -199,7 +199,7 @@ export default function Home() {
         />
         <meta name="author" content="ONE-SHOP" />
         <meta name="robots" content="index, follow" />
-        <link rel="canonical" href={window.location.origin} />
+        {/* canonical বাদ — <Seo> কম্পোনেন্ট এটা single source হিসেবে handle করে, এখানে থাকলে duplicate/conflicting canonical URL হয় */}
       </Helmet>
 
       {/* Mobile-only banner animation: slides in from the right, holds ~3s, slides out left, loops */}
@@ -217,7 +217,8 @@ export default function Home() {
       `}</style>
 
       <div className="overflow-hidden">
-        <Seo path="/Home" />
+        {/* path="/" ব্যবহার করা হলো, কারণ home route actual URL "/" — "/Home" দিলে canonical URL ভুল self-reference তৈরি করত */}
+        <Seo path="/" />
         {/* HERO */}
         <section className="relative hidden sm:block min-h-[60vh] sm:min-h-screen flex items-center pt-14 sm:pt-20">
 

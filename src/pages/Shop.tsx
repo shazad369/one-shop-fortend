@@ -1012,9 +1012,14 @@ export default function Shop() {
   return (
     <div className="pt-2 sm:pt-2 pb-12 translate-y-[60px] sm:pb-20 min-h-screen">
       <Seo path="/shop" />
-      <Helmet>
-        <title>ONE-SHOP — Premium E-Commerce</title>
-      </Helmet>
+   <Helmet>
+  <title>Shop All Products | ONE-SHOP BD</title>
+  <meta
+    name="description"
+    content="ONE-SHOP-এ ব্রাউজ করুন হাজারো প্রোডাক্ট — ফ্যাশন, গ্যাজেট, হোম ও লাইফস্টাইল। Free Shipping ও Cash on Delivery।"
+  />
+  <meta name="robots" content="index, follow" />
+</Helmet>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
 

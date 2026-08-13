@@ -55,12 +55,10 @@ const shimmerStyle = `
 // .env এ না থাকলে বা ভুল value দিলে ডিফল্ট 50% ব্যবহার হবে।
 // (ProductDetail.tsx এর সাথে consistent — একই env variable ব্যবহার হচ্ছে)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const DISCOUNT_PERCENT = Number(import.meta.env.VITE_PRODUCTDETAILS_DISCOUNT_PERCENT) || 50;
 
 const getInflatedPrice = (price: number) => {
   // Exact/true discount: crossed price theke sale_price a thik DISCOUNT_PERCENT% off e ashe
-  const displayPrice = Math.round(price / (1 - DISCOUNT_PERCENT / 100));
-  return { displayPrice, discountPct: DISCOUNT_PERCENT };
+
 };
 
 export default memo(function ProductCard({ product, index = 99 }: Props) {
@@ -99,7 +97,7 @@ export default memo(function ProductCard({ product, index = 99 }: Props) {
   // ─── Inflated Price System ────────────────────────────────────────────────
   // sale_price missing/undefined হলে price fallback, শেষে 0 — কখনো undefined না
   const realTotal = product.sale_price ?? product.price ?? 0;
-  const { displayPrice, discountPct } = getInflatedPrice(realTotal);
+  const sellerprice= product.price
 
   return (
     <Link to={`/product/${product.id}`}>
@@ -180,9 +178,12 @@ export default memo(function ProductCard({ product, index = 99 }: Props) {
 
           {/* Discount badge */}
           <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
-            <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-red-500 text-white">
-              -{discountPct}%
-            </span>
+     {product.discount_percent > 0 && (
+  <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-red-500 text-white">
+    {product.discount_percent}% OFF
+  </span>
+)} 
+         
           </div>
 
           {/* Hover overlay */}
@@ -216,8 +217,14 @@ export default memo(function ProductCard({ product, index = 99 }: Props) {
                 ৳{realTotal.toFixed(2)}
               </span>
               <span className={`text-[10px] line-through ${dark ? "text-gray-500" : "text-gray-400"}`}>
-                ৳{displayPrice.toFixed(2)}
-              </span>
+ <p> </p>
+                
+                
+
+                { sellerprice ? `৳${(sellerprice).toFixed(2)}` : <p> </p>
+                
+                }
+                                </span>
             </div>
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}

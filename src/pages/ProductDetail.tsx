@@ -768,6 +768,14 @@ function pageReducer(s: PageState, a: PageAction): PageState {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SEO HELPERS — Title/Description length control (গুগল Title 50-60ch,
+// Description 120-160ch এর বেশি হলে কেটে দেয়, তাই প্রোডাক্ট নাম
+// যত বড়/ছোট হোক, সবসময় একটা নিরাপদ length এ বেঁধে দেওয়া হচ্ছে)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const truncate = (str: string, max: number) =>
+  str.length > max ? str.slice(0, max).trim() + "…" : str;
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MAIN COMPONENT
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export default function ProductDetail() {
@@ -964,9 +972,9 @@ export default function ProductDetail() {
     const bd  = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Dhaka" }));
     const orderDateTime = `${bd.getFullYear()}-${pad(bd.getMonth()+1)}-${pad(bd.getDate())} ${pad(bd.getHours())}:${pad(bd.getMinutes())}:${pad(bd.getSeconds())}`;
     const orderData = {
-      productId:  p.id, title: p.title || p.name, price: p.sale_price + qty * 120,
+      productId:  p.id, title: p.title || p.name,Byer_email: user.email, price: p.sale_price + qty * 120,
       quantity: qty, size: size || null,
-      image: p.image || p.thumbnail_img, email: user.email, name: user.name,
+      image: p.image || p.thumbnail_img,seller_email: p.seller_email || "dont have nay seller email", seller_phn: p.phone || "dont have nay seller phone", name: user.name,
       address: locationData?.address, phonenumber: locationData?.phone,
       category: p.category, tracking_code: "to get tracking code please contact us", orderDateTime,
     };
@@ -978,7 +986,6 @@ export default function ProductDetail() {
       toast.error("Order দেওয়া যায়নি।");
     }
   }, [user, qty, size, locationData, headers]);
-
   const handleTruckConfirm = useCallback(async () => {
     await handleBuyNow();
     setTimeout(() => setShowConfirm(false), 1200);
@@ -1001,25 +1008,39 @@ export default function ProductDetail() {
   const title       = product.title || product.name || "";
   const image       = product.image || product.thumbnail_img || "";
   const description = product.description || product.details || "";
+  const storename   = product.store_name || "";
+  const storeprofileimage = product.store_profile_image || false;
   const activePrice = product.sale_price!;
   const images      = product.product_images || [];
   const { displayPrice, discountPct } = priceData!;
+  const sellerprice= product.sale_price
+  const sellerdiscount= product.discount_percent
+  const sellersoldprice= product.price
+
+  // 🔧 SEO FIX: title/description আগে {title}-এর length অনুযায়ী
+  // অনির্দিষ্টভাবে লম্বা হতো (কোনো প্রোডাক্ট নামে ৯০ ক্যারেক্টার
+  // পর্যন্তও চলে যেত), তাই গুগল মাঝপথে কেটে দিত। এখন product name
+  // ৩৮ ক্যারেক্টারে বেঁধে দেওয়া হচ্ছে, ফলে seoTitle সবসময় ~৫০-৬০ আর
+  // seoDesc সবসময় ~১৩০-১৬০ ক্যারেক্টারের মধ্যে থাকবে, যেকোনো
+  // প্রোডাক্টের জন্যই।
+  const seoTitle = `${truncate(title, 38)} | ONE-SHOP BD`;
+  const seoDesc  = `${truncate(title, 45)} মাত্র ৳${activePrice} টাকায় কিনুন ONE-SHOP এ। Cash on Delivery ও Free Shipping সারা বাংলাদেশে।`;
 
   return (
     <div className="pt-20 sm:pt-24 pb-12 sm:pb-20 min-h-screen">
       <Helmet>
-        <title>{title} | ONE-SHOP Bangladesh — Cash on Delivery</title>
-        <meta name="description" content={`${title} কিনুন ONE-SHOP এ। মাত্র ৳${activePrice} টাকায়। Cash on Delivery ও Free Shipping সারাদেশে।`} />
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDesc} />
         <meta name="keywords" content={`${title}, ${title} বাংলাদেশ, ${product.category} online bangladesh, cash on delivery, free shipping bd`} />
         <link rel="canonical" href={window.location.href} />
         <meta property="og:type" content="product" /><meta property="og:url" content={window.location.href} />
-        <meta property="og:title" content={`${title} — ONE-SHOP`} />
-        <meta property="og:description" content={`মাত্র ৳${activePrice} টাকায় পাচ্ছেন ${title}। Cash on Delivery ও Free Shipping।`} />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDesc} />
         <meta property="og:image" content={image} />
         <meta property="product:price:amount" content={String(activePrice)} /><meta property="product:price:currency" content="BDT" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${title} — ONE-SHOP`} />
-        <meta name="twitter:description" content={`মাত্র ৳${activePrice} টাকায়। Cash on Delivery।`} />
+        <meta name="twitter:title" content={seoTitle} />
+        <meta name="twitter:description" content={seoDesc} />
         <meta name="twitter:image" content={image} />
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org", "@type": "Product",
@@ -1071,9 +1092,31 @@ export default function ProductDetail() {
 
             <div className="mb-4">
               <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-emerald-500">৳{(activePrice ).toFixed(2)}</span>
-                <span className={`text-lg line-through ${dark ? "text-gray-500" : "text-gray-400"}`}>৳{displayPrice.toFixed(2)}</span>
-                <span className="px-2 py-1 rounded-lg bg-red-500/20 text-red-400 text-sm font-semibold">-{discountPct}% OFF</span>
+                <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-emerald-500"> 
+                  
+                  { sellerprice ? `৳${(sellerprice).toFixed(2)}` : <p> ৳{displayPrice.toFixed(2)}</p>
+                
+                }
+                  
+
+
+                </span>
+                <span className={`text-lg line-through ${dark ? "text-gray-500" : "text-gray-400"}`}> 
+                   {
+                    sellersoldprice ? `৳${(sellersoldprice).toFixed(2)}` : <p> 
+                      ৳{(activePrice ).toFixed(2)}</p>
+                   }
+                  
+                  </span>
+                <span >
+                {
+                  sellerdiscount &&  <span className="px-2 py-1 rounded-lg bg-red-500/20 text-red-400 text-sm font-semibold">
+                    -{(sellerdiscount).toFixed(0)}%
+                  </span>
+                }
+
+
+                </span>
               </div>
             </div>
 
@@ -1107,9 +1150,45 @@ export default function ProductDetail() {
                 {size && <p className="mt-2 text-xs text-emerald-400 font-medium">✓ Selected: {size}</p>}
               </div>
             )}
+ <div className="mb-5"> 
 
+
+{
+  storeprofileimage && (
+  <div className="flex items-center gap-3 w-full p-2 bg-gray-400 rounded-lg transition-all">
+  {/* ছবি থাকলে শুধু তখনই ছবি দেখাবে — না থাকলে এই জায়গায় কিচ্ছু রেন্ডার হবে না */}
+  {storeprofileimage && (
+ <img
+  src={storeprofileimage}
+  alt={storename}
+  className="w-12 h-12 shrink-0 rounded-full object-cover ring-2 ring-white shadow-md hover:scale-105 transition-transform duration-200"
+  onError={(e) => {
+    // লিঙ্ক নষ্ট থাকলে img element-টাই DOM থেকে সরিয়ে দাও, খালি জায়গা/ভাঙা আইকন যেন না থাকে
+    e.currentTarget.remove();
+  }}
+/>
+  )}
+
+  {/* স্টোরের নাম */}
+  <div className="min-w-0 flex-1">
+    <p className="font-semibold text-black text-base leading-tight truncate">
+      {storename}
+    </p>
+    {storename && (
+      <span className="text-xxs text-white leading-tight block">
+        Verified Store
+      </span>
+    )}
+  </div>
+</div>
+  )
+}
+                    
+                  </div> 
             <div className={`mb-5 p-4 rounded-xl ${dark ? "bg-white/5 border border-white/10" : "bg-white border border-gray-200"}`}>
               <div className="flex items-center justify-between mb-3">
+                     
+
                 <h3 className={`text-sm font-semibold ${dark ? "text-gray-300" : "text-gray-700"}`}>📝 Product Details</h3>
                 <button onClick={() => dispatch({ type: "TOGGLE_DESC" })} className="text-xs text-violet-400 hover:text-violet-300">{fullDesc ? "Show Less" : "Read More"}</button>
               </div>

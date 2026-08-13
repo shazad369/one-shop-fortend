@@ -4,21 +4,36 @@ import Seo from "../components/Seo";
 const LIMIT = 4;
 const CACHE_TTL = 5 * 60 * 1000;
 
-// ── cache helpers ─────────────────────────────────────────────
-const cacheKey   = (page: number) => `orders_page_${page}`;
+// ── admin auth helper ────────────────────────────────────────
+// ⚠️ আগে শুধু x-api-key (public, .env বান্ডিল হয়ে browser-এ যায়)
+// দিয়ে কল হতো — এখন adminToken (JWT, isAdmin===true) ও পাঠানো হয়।
+// Backend /admin/orders রুট requireAdmin দিয়ে protected, তাই
+// এই token ছাড়া কেউ response-ই পাবে না।
+function adminAuthHeaders() {
+  const token = localStorage.getItem("adminToken"); // login-এর সময় যেভাবে সেভ করেছেন সেই key নাম মিলিয়ে নিন
+  return {
+    Authorization: `Bearer ${token}`,
+    "x-api-key": import.meta.env.VITE_API_KEY,
+    "ngrok-skip-browser-warning": "true",
+    "Content-Type": "application/json",
+  };
+}
 
-const getCache   = (page: number) => {
+// ── cache helpers ─────────────────────────────────────────────
+const cacheKey = (page: number, status: string) => `admin_orders_page_${page}_status_${status || "all"}`;
+
+const getCache = (page: number, status: string) => {
   try {
-    const raw = sessionStorage.getItem(cacheKey(page));
+    const raw = sessionStorage.getItem(cacheKey(page, status));
     if (!raw) return null;
     const { data, ts } = JSON.parse(raw);
-    if (Date.now() - ts > CACHE_TTL) { sessionStorage.removeItem(cacheKey(page)); return null; }
+    if (Date.now() - ts > CACHE_TTL) { sessionStorage.removeItem(cacheKey(page, status)); return null; }
     return data;
   } catch { return null; }
 };
 
-const setCache   = (page: number, data: unknown) => {
-  try { sessionStorage.setItem(cacheKey(page), JSON.stringify({ data, ts: Date.now() })); }
+const setCache = (page: number, status: string, data: unknown) => {
+  try { sessionStorage.setItem(cacheKey(page, status), JSON.stringify({ data, ts: Date.now() })); }
   catch { /* quota exceeded */ }
 };
 // ─────────────────────────────────────────────────────────────
@@ -71,7 +86,6 @@ function SkeletonOrder() {
       background: "linear-gradient(135deg, #1e1b4b44, #0f0f2344)",
       animation: "pulse 1.5s ease-in-out infinite",
     }}>
-      <Seo path="/Addproductroute" />
       <div style={{ height: 24, background: "#6d28d933", borderRadius: 8, marginBottom: 14 }} />
       <div style={{ display: "flex", gap: 14, marginBottom: 14 }}>
         <div style={{ width: 72, height: 72, background: "#6d28d933", borderRadius: 10, flexShrink: 0 }} />
@@ -90,9 +104,97 @@ function SkeletonOrder() {
     </div>
   );
 }
+
+// ════════════════════════════════════════════════════════════
+// 📊 Status Summary — সব seller মিলিয়ে কয়টা delivered/return/ইত্যাদি
+// (admin-only, requireAdmin দিয়ে protected route থেকে আসে)
+// ════════════════════════════════════════════════════════════
+
+const STATUS_META = {
+  processing:        { label: "প্রসেসিং",        color: "#22d3ee" },
+  in_transit:        { label: "পথে আছে",         color: "#60a5fa" },
+  delivered:         { label: "ডেলিভারি হয়েছে",  color: "#4ade80" },
+  partial_delivered: { label: "আংশিক ডেলিভারি",  color: "#fbbf24" },
+  returned:          { label: "রিটার্ন হয়েছে",   color: "#fb923c" },
+  cancelled:         { label: "বাতিল হয়েছে",     color: "#f87171" },
+};
+const STATUS_ORDER = ["processing", "in_transit", "delivered", "partial_delivered", "returned", "cancelled"];
+
+function StatusSummaryBar({ activeStatus, onSelect }) {
+  const [summary, setSummary] = useState(null);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API}/admin/order-status-summary`, {
+          headers: adminAuthHeaders(),
+        });
+        const data = await res.json();
+        if (!cancelled && data.success) {
+          setSummary(data.summary);
+          setTotal(data.total);
+        }
+      } catch { /* silent — summary bar না দেখালেও পেজ কাজ করবে */ }
+      finally { if (!cancelled) setLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, marginBottom: 24 }}>
+        {[1,2,3,4,5,6,7].map(i => (
+          <div key={i} style={{ height: 64, borderRadius: 12, background: "#6d28d922", animation: "pulse 1.5s ease-in-out infinite" }} />
+        ))}
+      </div>
+    );
+  }
+
+  if (!summary) return null;
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, marginBottom: 24 }}>
+      <button
+        onClick={() => onSelect(null)}
+        style={{
+          textAlign: "left", padding: "10px 14px", borderRadius: 12, cursor: "pointer",
+          background: activeStatus === null ? "#6d28d933" : "#1e1b4b44",
+          border: `1px solid ${activeStatus === null ? "#a78bfa" : "#6d28d944"}`,
+        }}
+      >
+        <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 4 }}>সব অর্ডার</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: "#e2e8f0" }}>{total}</div>
+      </button>
+
+      {STATUS_ORDER.map((key) => {
+        const meta = STATUS_META[key];
+        const active = activeStatus === key;
+        return (
+          <button
+            key={key}
+            onClick={() => onSelect(key)}
+            style={{
+              textAlign: "left", padding: "10px 14px", borderRadius: 12, cursor: "pointer",
+              background: active ? `${meta.color}22` : "#1e1b4b44",
+              border: `1px solid ${active ? meta.color : "#6d28d944"}`,
+            }}
+          >
+            <div style={{ fontSize: 11, color: active ? meta.color : "#94a3b8", marginBottom: 4 }}>{meta.label}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: active ? meta.color : "#e2e8f0" }}>{summary[key] ?? 0}</div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 // ─────────────────────────────────────────────────────────────
 
-export default function OrdersPage() {
+export default function AdminOrdersPage() {
+  const [activeStatus, setActiveStatus] = useState(null); // null = সব status
   const [orders,      setOrders]      = useState([]);
   const [total,       setTotal]       = useState(0);
   const [loading,     setLoading]     = useState(true);
@@ -106,12 +208,12 @@ export default function OrdersPage() {
   const pageRef      = useRef(1);
 
   // ── fetch one page ────────────────────────────────────────
-  const fetchPage = useCallback(async (p: number) => {
-    if (fetchedPages.current.has(p)) return;
-    fetchedPages.current.add(p);
+  const fetchPage = useCallback(async (p: number, status: string) => {
+    const pageKey = `${status || "all"}_${p}`;
+    if (fetchedPages.current.has(pageKey)) return;
+    fetchedPages.current.add(pageKey);
 
-    // cache check
-    const cached = getCache(p);
+    const cached = getCache(p, status);
     if (cached) {
       setOrders(prev => p === 1 ? cached.orders : [...prev, ...cached.orders]);
       setTotal(cached.total);
@@ -123,17 +225,17 @@ export default function OrdersPage() {
     p === 1 ? setLoading(true) : setLoadingMore(true);
 
     try {
+      const qs = new URLSearchParams({ page: String(p), limit: String(LIMIT) });
+      if (status) qs.set("status", status);
+
       const res = await fetch(
-        `${import.meta.env.VITE_API}/orders?page=${p}&limit=${LIMIT}`,
-        { headers: { 'x-api-key': import.meta.env.VITE_API_KEY,
-                     'ngrok-skip-browser-warning': 'true',
-                    'Content-Type': 'application/json' } }
+        `${import.meta.env.VITE_API}/admin/orders?${qs.toString()}`,
+        { headers: adminAuthHeaders() }
       );
-      if (!res.ok) throw new Error("Server থেকে data আসেনি");
+      if (!res.ok) throw new Error("Server থেকে data আসেনি (admin login ঠিক আছে তো?)");
       const data = await res.json();
 
-      // cache save
-      setCache(p, { orders: data.orders, total: data.total, hasMore: data.hasMore });
+      setCache(p, status, { orders: data.orders, total: data.total, hasMore: data.hasMore });
 
       setOrders(prev => p === 1 ? data.orders : [...prev, ...data.orders]);
       setTotal(data.total);
@@ -145,12 +247,15 @@ export default function OrdersPage() {
     }
   }, []);
 
-  // ── first load ────────────────────────────────────────────
+  // ── first load + status বদলালে reset ───────────────────────
   useEffect(() => {
     fetchedPages.current.clear();
     pageRef.current = 1;
-    fetchPage(1);
-  }, [fetchPage]);
+    setOrders([]);
+    setHasMore(true);
+    setError(null);
+    fetchPage(1, activeStatus);
+  }, [fetchPage, activeStatus]);
 
   // ── infinite scroll ───────────────────────────────────────
   useEffect(() => {
@@ -162,14 +267,14 @@ export default function OrdersPage() {
       ([entry]) => {
         if (entry.isIntersecting && hasMore && !loadingMore) {
           pageRef.current += 1;
-          fetchPage(pageRef.current);
+          fetchPage(pageRef.current, activeStatus);
         }
       },
       { rootMargin: '200px' }
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [hasMore, loading, loadingMore, fetchPage]);
+  }, [hasMore, loading, loadingMore, fetchPage, activeStatus]);
   // ─────────────────────────────────────────────────────────
 
   const toggleMark = (id) => setMarked(prev => ({ ...prev, [id]: !prev[id] }));
@@ -177,10 +282,11 @@ export default function OrdersPage() {
 
   if (loading) return (
     <div style={{ minHeight: "100vh", background: "#0a0a1a", padding: "24px 16px" }}>
+      <Seo path="/admin/orders" />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, borderBottom: "1px solid #6d28d944", paddingBottom: 16 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, color: "#e2e8f0" }}>📦 Orders Dashboard</h1>
+          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, color: "#e2e8f0" }}>👑 Admin — সব Orders</h1>
           <p style={{ margin: "4px 0 0", fontSize: 14, color: "#94a3b8" }}>Loading...</p>
         </div>
       </div>
@@ -198,18 +304,23 @@ export default function OrdersPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a1a", padding: "24px 16px", fontFamily: "'Segoe UI', sans-serif" }}>
+      <Seo path="/admin/orders" />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, borderBottom: "1px solid #6d28d944", paddingBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, borderBottom: "1px solid #6d28d944", paddingBottom: 16 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, color: "#e2e8f0" }}>📦 Orders Dashboard</h1>
+          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, color: "#e2e8f0" }}>👑 Admin — সব Orders</h1>
           <p style={{ margin: "4px 0 0", fontSize: 14, color: "#94a3b8" }}>
-            Total: <strong>{total}</strong> &nbsp;|&nbsp; Marked:{" "}
+            {activeStatus ? STATUS_META[activeStatus]?.label : "সব seller"} — Total:{" "}
+            <strong>{total}</strong> &nbsp;|&nbsp; Marked:{" "}
             <strong style={{ color: "#4ade80" }}>{markedCount}</strong>
           </p>
         </div>
       </div>
+
+      {/* Status summary bar — সব seller মিলিয়ে count, ক্লিক করলে filter */}
+      <StatusSummaryBar activeStatus={activeStatus} onSelect={setActiveStatus} />
 
       {/* Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 20 }}>
@@ -224,7 +335,7 @@ export default function OrdersPage() {
                 : "linear-gradient(135deg, #1e1b4b44, #0f0f2344)",
               boxShadow: isMarked ? "0 0 18px #4ade8033" : "0 4px 24px #0005",
             }}>
-              {/* Toggle row */}
+              {/* Toggle row + courier status badge */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
                 <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
                   <input type="checkbox" checked={!!isMarked} onChange={() => toggleMark(order._id)} style={{ display: "none" }} />
@@ -248,6 +359,17 @@ export default function OrdersPage() {
                     {isMarked ? "✅ Done" : "⏳ Pending"}
                   </span>
                 </label>
+
+                {order.courier_status && (
+                  <span style={{
+                    fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 99,
+                    background: `${STATUS_META[order.courier_status]?.color || "#94a3b8"}22`,
+                    color: STATUS_META[order.courier_status]?.color || "#94a3b8",
+                    border: `1px solid ${STATUS_META[order.courier_status]?.color || "#94a3b8"}66`,
+                  }}>
+                    {STATUS_META[order.courier_status]?.label || order.courier_status}
+                  </span>
+                )}
               </div>
 
               {/* Product image + title */}
@@ -290,6 +412,8 @@ export default function OrdersPage() {
                 <InfoRow icon="🔖" label="Order ID"   value={order._id} small />
                 <InfoRow icon="🚚" label="Tracking"   value={order.tracking_code} />
                 <InfoRow icon="⏰" label="Ordered At" value={order.orderDateTime} />
+                <InfoRow icon="🏪" label="Seller Phone" value={order.seller_phn} />
+                <InfoRow icon="✉️"   label="Selleremail" value={order.seller_email} />
               </div>
             </div>
           );

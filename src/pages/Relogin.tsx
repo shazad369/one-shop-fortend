@@ -8,7 +8,7 @@ type ForgotStep = 'idle' | 'email' | 'otp' | 'newpass';
 
 const ReLogin = () => {
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { setUser, setUserToken } = useAuth();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [dark, setDark] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -103,6 +103,7 @@ const ReLogin = () => {
         if (data.success) {
           localStorage.setItem('user', JSON.stringify(data.user));
           setUser(data.user);
+          setUserToken(data.token); // 👈 JWT token সেভ
           toast.success(`Welcome back, ${data.user.name || 'User'}!`, {
             position: 'top-right',
             autoClose: 2000,
@@ -135,6 +136,7 @@ const ReLogin = () => {
         if (data.success) {
           localStorage.setItem('user', JSON.stringify(data.user));
           setUser(data.user);
+          setUserToken(data.token); // 👈 JWT token সেভ
           toast.success(`Welcome back, ${data.user.name || 'User'}!`, {
             position: 'top-right',
             autoClose: 2000,
@@ -620,6 +622,17 @@ const ReLogin = () => {
               Register
             </Link>
           </p>
+                  <p className={`text-center text-sm mt-6 ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
+            Become a seller —{' '}
+            <Link to="/sellregister" className="text-blue-400 font-medium hover:underline">
+              Register
+            </Link>{' '}
+            or{' '}
+            <Link to="/selllogin" className="text-blue-400 font-medium hover:underline">
+              Login
+            </Link>
+          </p>
+          
         </div>
       )}
     </div>

@@ -33,6 +33,8 @@ navLinks: [
   { label: "Shop", path: "/shop" },
   { label: "About", path: "/about" },
 
+  { label: "Seller Panel", path: "/sellerpanal" },
+
   { label: "Contact", path: "/contact" },
   { label: "Location", path: "/location" },
   user.email =="shazadahamed571@gmail.com"

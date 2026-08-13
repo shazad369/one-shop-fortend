@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ShoppingBag } from "lucide-react";
+import { Menu, X, ShoppingBag, Store, LogOut } from "lucide-react";
 import { siteConfig } from "../data/config";
 import { useTheme } from "../App";
 import { useAuth } from '../Contex/AuthContext';
@@ -15,6 +15,36 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { user, logOut } = useAuth();
   const dropdownRef = useRef(null);
+
+  // ════════════════════════════════════════════════════════════
+  // 🏪 SELLER AUTH STATE — localStorage-এ sellerToken থাকলে seller
+  // login করা আছে ধরে নেওয়া হচ্ছে (আসল verify SellerProtectedRoute করে)
+  // ════════════════════════════════════════════════════════════
+  const [seller, setSeller] = useState(null);
+  const [sellerDropdownOpen, setSellerDropdownOpen] = useState(false);
+  const sellerDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('sellerToken');
+    const sellerRaw = localStorage.getItem('seller');
+    if (token && sellerRaw) {
+      try {
+        setSeller(JSON.parse(sellerRaw));
+      } catch {
+        setSeller(null);
+      }
+    } else {
+      setSeller(null);
+    }
+  }, [location]); // route বদলালে আবার চেক করবে (যেমন seller login করার পর navbar আপডেট হবে)
+
+  const handleSellerLogout = () => {
+    localStorage.removeItem('sellerToken');
+    localStorage.removeItem('seller');
+    setSeller(null);
+    setSellerDropdownOpen(false);
+    navigate("/"); // 👈 logout করলে হোম পেজে ফেরত
+  };
 
   const handleLogout = () => {
     logOut();
@@ -32,7 +62,18 @@ export default function Navbar() {
     setIsOpen(false);
   }, [location]);
 
-  // Close dropdown when clicking outside
+  // ════════════════════════════════════════════════════════════
+  // 🔒 NAV LINK FILTER — এখানে reactive state (seller, user) দিয়ে
+  // filter করা হচ্ছে, config.js-এ না (config.js শুধু plain data,
+  // login state বদলালে সেখানে conditional কাজ করবে না)
+  // ════════════════════════════════════════════════════════════
+  const visibleNavLinks = siteConfig.navLinks.filter((link) => {
+    if (link.path === "/sellerpanal") return !!seller;        // 👈 শুধু seller login থাকলে
+    if (link.path === "/addproduct") return user?.email === "shazadahamed571@gmail.com"; // 👈 শুধু admin
+    return true; // বাকি সব সবসময় দেখাবে
+  });
+
+  // Close user dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -41,6 +82,17 @@ export default function Navbar() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Close seller dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutsideSeller = (e) => {
+      if (sellerDropdownRef.current && !sellerDropdownRef.current.contains(e.target)) {
+        setSellerDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutsideSeller);
+    return () => document.removeEventListener("mousedown", handleClickOutsideSeller);
   }, []);
 
   return (
@@ -85,7 +137,7 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-1">
-            {siteConfig.navLinks.map((link) => (
+            {visibleNavLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
@@ -110,7 +162,14 @@ export default function Navbar() {
           {/* Right Side */}
           <div className="flex items-center gap-2 sm:gap-3">
 
-            {/* Profile Picture with Dropdown */}
+            {/* ════════════════════════════════════════════════════
+                👤 PROFILE SLOT — একটাই জায়গা, ৩ অবস্থা:
+                ১. user login করা থাকলে → picture
+                ২. user login না থাকলে কিন্তু seller login থাকলে → "Seller" text
+                ৩. কোনোটাই না থাকলে → "Login" link
+                (আগে seller-এর জন্য আলাদা button ছিল, যেটার কারণে
+                "Seller" আর "Login" দুটোই একসাথে দেখাচ্ছিল — সেই bug fix)
+               ════════════════════════════════════════════════════ */}
             <div className="relative" ref={dropdownRef}>
            <div>
             {user ? (
@@ -120,8 +179,18 @@ export default function Navbar() {
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover ring-2 ring-violet-500/30 cursor-pointer hover:ring-violet-500/60 transition-all duration-200"
               />
+            ) : seller ? (
+              <h2
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className={`text-sm font-medium cursor-pointer flex items-center gap-1.5 transition-all duration-200 ${
+                  dark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <Store size={16} />
+                Seller
+              </h2>
             ) : (
-              <h2 className="text-sm font-medium cursor-pointer text-gray-400 hover:text-white transition-all duration-200">{user?.displayName || <Link to="/relogin">Login</Link>  }</h2>
+              <h2 className="text-sm font-medium cursor-pointer text-gray-400 hover:text-white transition-all duration-200"><Link to="/relogin">Login</Link></h2>
             )
             }
            </div>
@@ -139,39 +208,58 @@ export default function Navbar() {
                         : "bg-white border-gray-200"
                     }`}
                   >
-                    {/* User Info */}
-                    {user && (
-                      <div className={`px-4 py-3 border-b ${
-                        dark ? "border-white/10" : "border-gray-100"
-                      }`}>
-                        <p className={`text-xs font-medium truncate max-w-[130px] ${
-                          dark ? "text-gray-200" : "text-gray-800"
-                        }`}>
-                          {user.displayName || user.name || "User"}
-                        </p>
-                        <p className={`text-xs truncate max-w-[130px] mt-0.5 ${
-                          dark ? "text-gray-500" : "text-gray-400"
-                        }`}>
-                          {user.email || ""}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Logout / Register Button */}
                     {user ? (
-                      <button
-                        onClick={handleLogout}
-                        className={`w-full px-4 py-2.5 text-left text-sm font-medium flex items-center gap-2 transition-colors duration-150 text-red-500 ${
-                          dark ? "hover:bg-red-500/10" : "hover:bg-red-50"
-                        }`}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                          <polyline points="16 17 21 12 16 7"/>
-                          <line x1="21" y1="12" x2="9" y2="12"/>
-                        </svg>
-                        Logout
-                      </button>
+                      <>
+                        {/* Normal user info + logout */}
+                        <div className={`px-4 py-3 border-b ${dark ? "border-white/10" : "border-gray-100"}`}>
+                          <p className={`text-xs font-medium truncate max-w-[130px] ${dark ? "text-gray-200" : "text-gray-800"}`}>
+                            {user.displayName || user.name || "User"}
+                          </p>
+                          <p className={`text-xs truncate max-w-[130px] mt-0.5 ${dark ? "text-gray-500" : "text-gray-400"}`}>
+                            {user.email || ""}
+                          </p>
+                        </div>
+                        <button
+                          onClick={handleLogout}
+                          className={`w-full px-4 py-2.5 text-left text-sm font-medium flex items-center gap-2 transition-colors duration-150 text-red-500 ${
+                            dark ? "hover:bg-red-500/10" : "hover:bg-red-50"
+                          }`}
+                        >
+                          <LogOut size={15} />
+                          Logout
+                        </button>
+                      </>
+                    ) : seller ? (
+                      <>
+                        {/* Seller info + dashboard + logout */}
+                        <div className={`px-4 py-3 border-b ${dark ? "border-white/10" : "border-gray-100"}`}>
+                          <p className={`text-xs font-medium truncate max-w-[130px] ${dark ? "text-gray-200" : "text-gray-800"}`}>
+                            {seller.name || "Seller"}
+                          </p>
+                          <p className={`text-xs truncate max-w-[130px] mt-0.5 ${dark ? "text-gray-500" : "text-gray-400"}`}>
+                            {seller.email || ""}
+                          </p>
+                        </div>
+                        <Link
+                          to="/sellerpanal"
+                          onClick={() => setDropdownOpen(false)}
+                          className={`w-full px-4 py-2.5 text-left text-sm font-medium flex items-center gap-2 transition-colors duration-150 ${
+                            dark ? "text-gray-200 hover:bg-white/5" : "text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          <Store size={15} />
+                          Dashboard
+                        </Link>
+                        <button
+                          onClick={handleSellerLogout}
+                          className={`w-full px-4 py-2.5 text-left text-sm font-medium flex items-center gap-2 transition-colors duration-150 text-red-500 ${
+                            dark ? "hover:bg-red-500/10" : "hover:bg-red-50"
+                          }`}
+                        >
+                          <LogOut size={15} />
+                          Logout
+                        </button>
+                      </>
                     ) : (
                       <button
                         onClick={() => { navigate("/login"); setDropdownOpen(false); }}
@@ -225,7 +313,7 @@ export default function Navbar() {
             }`}
           >
             <div className="px-4 py-4 space-y-1">
-              {siteConfig.navLinks.map((link, i) => (
+              {visibleNavLinks.map((link, i) => (
                 <motion.div
                   key={link.path}
                   initial={{ opacity: 0, x: -20 }}
@@ -247,7 +335,38 @@ export default function Navbar() {
                 </motion.div>
               ))}
 
-              {/* Mobile Logout / Register */}
+              {/* Mobile Seller Login/Logout */}
+              <div className="pt-2">
+                {seller ? (
+                  <div className="flex gap-2">
+                    <Link
+                      to="/sellerpanal"
+                      className={`flex-1 py-3 text-center text-sm font-semibold rounded-xl ${
+                        dark ? "bg-white/5 text-white" : "bg-gray-100 text-gray-700"
+                      }`}
+                    >
+                      Seller Dashboard
+                    </Link>
+                    <button
+                      onClick={handleSellerLogout}
+                      className="flex-1 py-3 bg-red-500/10 text-red-500 text-sm font-semibold rounded-xl border border-red-500/20"
+                    >
+                      Seller Logout
+                    </button>
+                  </div>
+                ) : (
+                  <Link
+                    to="/seller/login"
+                    className={`block w-full py-3 text-center text-sm font-semibold rounded-xl border ${
+                      dark ? "border-white/10 text-white" : "border-gray-200 text-gray-700"
+                    }`}
+                  >
+                    Seller Login
+                  </Link>
+                )}
+              </div>
+
+              {/* Mobile Logout / Register (normal user) */}
               <div className="pt-2">
                 {user ? (
                   <button

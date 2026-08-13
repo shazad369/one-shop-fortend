@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
@@ -18,7 +19,8 @@ import Pathaocurior from "./pages/Pathaocurior";
 import Addproductroute from "./pages/Addproductroute";
 import { createContext } from "react";
 import { AuthProvider, useAuth } from "./Contex/AuthContext";
-
+import SellerForgetPassword from "./pages/Sellerforgetpassword";
+import AdminProtectedRoute from "./pages/Admin protectedroute";
 // Theme Context
 export const ThemeContext = createContext<{
   dark: boolean;
@@ -57,6 +59,24 @@ function AppContent() {
     <ThemeContext.Provider value={{ dark, toggle }}>
       <Router>
         <ScrollToTop /> {/* ← এটা যোগ করা হয়েছে */}
+
+        {/* 🔧 SEO FIX: Organization schema — sitewide, একবার বসালেই
+            গুগল বুঝতে পারবে "ONE-SHOP" একটা রিয়েল ব্যবসা/ব্র্যান্ড,
+            আর Product schema-র brand.name এর সাথেও কানেক্ট হবে। */}
+        <Helmet>
+          <script type="application/ld+json">{JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "ONE-SHOP",
+            url: "https://oneshop.pre.bd",
+            logo: "", // 🔧 এখানে পরে লোগোর URL বসাবেন (Cloudinary বা যেখানে হোস্ট করা আছে)
+            sameAs: [
+              "https://www.facebook.com/profile.php?id=61588768753765",
+              "https://www.instagram.com/one_shop_369",
+            ],
+          })}</script>
+        </Helmet>
+
         <div className={`min-h-screen transition-colors duration-500 ${
           dark ? "bg-[#0a0a0f] text-white" : "bg-gray-50 text-gray-900"
         }`}>
@@ -76,7 +96,12 @@ function AppContent() {
               <Route path="/location" element={<ProtectedRoute><Location /></ProtectedRoute>} />
               <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
               <Route path="/pathao" element={<ProtectedRoute><Pathaocurior /></ProtectedRoute>} />
-              <Route path="/addproduct" element={<ProtectedRoute><Addproductroute /></ProtectedRoute>} />
+              <Route path="/addproduct" element={  <AdminProtectedRoute> <Addproductroute /></AdminProtectedRoute>} />
+             
+              <Route path="/sellregister" element={<Sellregister />} />
+              <Route path="/selllogin" element={<Selllogin />} />
+              <Route path="/sellerpanal" element={<SellerProtectedRoute><SellerPanal /></SellerProtectedRoute>} />
+              <Route path="/sellerforgetpassword" element={<SellerForgetPassword />} />
 
               {/* Unknown */}
               <Route path="*" element={<Navigate to="/relogin" replace />} />
@@ -98,6 +123,10 @@ function AppContent() {
 }
 
 import { HelmetProvider } from "react-helmet-async";
+import Sellregister from "./pages/Sellregister";
+import Selllogin from "./pages/Selllogin";
+import SellerPanal from "./pages/Sellerpanal";
+import SellerProtectedRoute from "./pages/Sellerprotectedroute";
 
 function App() {
   return (
